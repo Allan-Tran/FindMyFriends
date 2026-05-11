@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>Mesh Messenger uses Bluetooth to discover nearby friends and relay messages when there is no internet.</string>
+    <key>NSBluetoothPeripheralUsageDescription</key>
+    <string>Mesh Messenger advertises a small beacon so nearby friends can detect you.</string>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>Mesh Messenger uses the local network to discover nearby friends over Bluetooth and Wi-Fi.</string>
+    <key>NSBonjourServices</key>
+    <array>
+        <string>_mesh-msgr._tcp</string>
+        <string>_mesh-msgr._udp</string>
+    </array>
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>bluetooth-central</string>
+        <string>bluetooth-peripheral</string>
+        <string>fetch</string>
+        <string>remote-notification</string>
+    </array>
+</dict>
+</plist>

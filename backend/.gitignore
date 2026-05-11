@@ -1,0 +1,12 @@
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.idea/
+.vscode/
+*.swp
+appsettings.*.local.json
+secrets.json
+AuthKey_*.p8
+.env

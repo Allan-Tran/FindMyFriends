@@ -1,7 +1,7 @@
 import Foundation
 import SwiftData
 import Combine
-import MultipeerConnectivity
+@preconcurrency import MultipeerConnectivity
 
 enum MessageSource: Sendable {
     case mesh
@@ -75,11 +75,11 @@ final class MessageRouter: ObservableObject, MeshEngineDelegate {
         guard activeGroupIds.contains(envelope.groupId) else { return }
         switch envelope.messageType {
         case .chat:
-            persist(envelope, status: source == .relay ? .delivered : .delivered)
+            persist(envelope, status: .delivered)
         case .peerAnnounce:
             handlePeerAnnounce(envelope)
         case .groupSync:
-            break
+            handleGroupSync(envelope)
         case .ack:
             break
         }
@@ -110,11 +110,36 @@ final class MessageRouter: ObservableObject, MeshEngineDelegate {
         try? messageRepository.upsert(local)
     }
 
+    func broadcastGroupSync(groupId: UUID, memberUsernames: [String]) {
+        guard let username = session.currentUsername else { return }
+        let payload = GroupSyncPayload(groupId: groupId, memberUsernames: memberUsernames)
+        guard let payloadData = try? MeshCodec.encoder.encode(payload),
+              let payloadString = String(data: payloadData, encoding: .utf8) else { return }
+        let envelope = MeshMessage(
+            groupId: groupId,
+            originPeerId: username,
+            senderUsername: username,
+            content: payloadString,
+            ttl: AppConfig.defaultMessageTTL,
+            messageType: .groupSync
+        )
+        meshEngine.broadcast(envelope)
+    }
+
     private func handlePeerAnnounce(_ envelope: MeshMessage) {
         guard let data = envelope.content.data(using: .utf8),
               let payload = try? MeshCodec.decoder.decode(PeerAnnouncePayload.self, from: data) else { return }
         for gid in payload.groupIds where activeGroupIds.contains(gid) {
             try? peerRepository.touch(peerId: payload.peerId, username: payload.username, groupId: gid)
+        }
+    }
+
+    private func handleGroupSync(_ envelope: MeshMessage) {
+        guard let data = envelope.content.data(using: .utf8),
+              let payload = try? MeshCodec.decoder.decode(GroupSyncPayload.self, from: data) else { return }
+        guard activeGroupIds.contains(payload.groupId) else { return }
+        for username in payload.memberUsernames {
+            try? peerRepository.touch(peerId: username, username: username, groupId: payload.groupId)
         }
     }
 }

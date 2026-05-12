@@ -9,6 +9,7 @@ final class GroupStore: ObservableObject {
 
     private let groupsAPI: GroupsAPI
     private let repository: GroupRepository
+    weak var router: MessageRouter?
 
     init(client: APIClient, repository: GroupRepository) {
         self.groupsAPI = GroupsAPI(client: client)
@@ -37,7 +38,9 @@ final class GroupStore: ObservableObject {
             let dto = try await groupsAPI.create(name: name)
             try save(dto)
             loadLocal()
-            return groups.first { $0.id == dto.id }
+            let group = groups.first { $0.id == dto.id }
+            if let group { broadcastSync(for: group) }
+            return group
         } catch {
             lastError = (error as? LocalizedError)?.errorDescription ?? "\(error)"
             return nil
@@ -49,11 +52,17 @@ final class GroupStore: ObservableObject {
             let dto = try await groupsAPI.join(id: groupId, inviteCode: inviteCode)
             try save(dto)
             loadLocal()
-            return groups.first { $0.id == dto.id }
+            let group = groups.first { $0.id == dto.id }
+            if let group { broadcastSync(for: group) }
+            return group
         } catch {
             lastError = (error as? LocalizedError)?.errorDescription ?? "\(error)"
             return nil
         }
+    }
+
+    func broadcastSyncAll() {
+        for group in groups { broadcastSync(for: group) }
     }
 
     func leave(groupId: UUID, userId: UUID) async {
@@ -64,6 +73,10 @@ final class GroupStore: ObservableObject {
         } catch {
             lastError = (error as? LocalizedError)?.errorDescription ?? "\(error)"
         }
+    }
+
+    private func broadcastSync(for group: LocalGroup) {
+        router?.broadcastGroupSync(groupId: group.id, memberUsernames: group.memberUsernames)
     }
 
     private func save(_ dto: GroupResponse) throws {

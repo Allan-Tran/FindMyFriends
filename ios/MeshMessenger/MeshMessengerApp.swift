@@ -40,7 +40,9 @@ struct MeshMessengerApp: App {
             peerRepository: peerRepo
         )
         _router = StateObject(wrappedValue: router)
-        _groupStore = StateObject(wrappedValue: GroupStore(client: session.apiClient, repository: groupRepo))
+        let store = GroupStore(client: session.apiClient, repository: groupRepo)
+        store.router = router
+        _groupStore = StateObject(wrappedValue: store)
 
         let push = PushNotificationCenter(client: session.apiClient)
         push.attach(router: router)

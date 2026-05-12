@@ -1,5 +1,5 @@
 import Foundation
-import MultipeerConnectivity
+@preconcurrency import MultipeerConnectivity
 import Combine
 
 protocol MeshEngineDelegate: AnyObject, Sendable {
@@ -22,6 +22,7 @@ final class MeshEngine: NSObject, ObservableObject {
     private(set) var username: String = ""
     private var groupIds: Set<UUID> = []
     private let seenCache = SeenCache()
+    private let reconnectManager = ReconnectManager()
 
     func start(username: String, groupIds: Set<UUID>) {
         stop()
@@ -57,6 +58,7 @@ final class MeshEngine: NSObject, ObservableObject {
     }
 
     func stop() {
+        reconnectManager.cancelAll()
         advertiser?.stopAdvertisingPeer()
         advertiser?.delegate = nil
         advertiser = nil
@@ -116,8 +118,16 @@ extension MeshEngine: MCSessionDelegate {
         Task { @MainActor in
             self.connectedPeers = session.connectedPeers
             self.delegate?.meshEngine(self, didUpdateConnectedPeers: session.connectedPeers)
-            if state == .connected {
+            switch state {
+            case .connected:
+                self.reconnectManager.didConnect(to: peerID)
                 self.sendPeerAnnounce(to: peerID)
+            case .notConnected:
+                guard let browser = self.browser, let mcSession = self.session else { return }
+                let context = self.groupIds.map { $0.meshPrefix }.sorted().joined(separator: ",").data(using: .utf8)
+                self.reconnectManager.scheduleReconnect(to: peerID, via: browser, on: mcSession, context: context)
+            default:
+                break
             }
         }
     }
@@ -153,10 +163,12 @@ extension MeshEngine: MCSessionDelegate {
 
 extension MeshEngine: MCNearbyServiceAdvertiserDelegate {
     nonisolated func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
+        // Box the pre-concurrency callback so it can cross the actor boundary safely.
+        nonisolated(unsafe) let handler = invitationHandler
         Task { @MainActor in
             let ctxString = context.flatMap { String(data: $0, encoding: .utf8) }
             let accept = self.hasOverlap(with: ctxString) || (ctxString == nil && !self.groupIds.isEmpty)
-            invitationHandler(accept, accept ? self.session : nil)
+            handler(accept, accept ? self.session : nil)
         }
     }
 

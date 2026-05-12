@@ -1,5 +1,5 @@
 import Foundation
-import CoreBluetooth
+@preconcurrency import CoreBluetooth
 
 struct NearbyPeerProximity: Identifiable, Sendable {
     let id: String

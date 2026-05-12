@@ -43,11 +43,13 @@ final class MessageRouter: ObservableObject, MeshEngineDelegate {
         meshEngine.start(username: username, groupIds: groupIds)
         proximityEngine.start(localIdentity: username)
         syncEngine.start()
+        syncEngine.updateActiveGroups(groupIds)
     }
 
     func updateActiveGroups(_ ids: Set<UUID>) {
         activeGroupIds = ids
         meshEngine.updateGroups(ids)
+        syncEngine.updateActiveGroups(ids)
     }
 
     func stop() {
@@ -68,7 +70,9 @@ final class MessageRouter: ObservableObject, MeshEngineDelegate {
         )
         persist(envelope, status: .sent)
         meshEngine.broadcast(envelope)
-        await syncEngine.push(envelope: envelope)
+        if let uid = session.currentUid {
+            await syncEngine.push(envelope: envelope, senderUid: uid)
+        }
     }
 
     func ingest(_ envelope: MeshMessage, source: MessageSource) {

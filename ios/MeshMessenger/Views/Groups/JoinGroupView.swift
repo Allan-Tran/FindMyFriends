@@ -3,7 +3,6 @@ import SwiftUI
 struct JoinGroupView: View {
     @EnvironmentObject private var groupStore: GroupStore
     @Environment(\.dismiss) private var dismiss
-    @State private var groupIdString: String = ""
     @State private var inviteCode: String = ""
     @State private var working = false
     @State private var error: String?
@@ -11,13 +10,14 @@ struct JoinGroupView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Group") {
-                    TextField("Group ID (UUID)", text: $groupIdString)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled(true)
+                Section {
                     TextField("Invite code", text: $inviteCode)
                         .textInputAutocapitalization(.characters)
                         .autocorrectionDisabled(true)
+                } header: {
+                    Text("Join group")
+                } footer: {
+                    Text("Ask the group admin for the 8-character code.")
                 }
                 if let error = error {
                     Section { Text(error).foregroundStyle(.red) }
@@ -30,23 +30,18 @@ struct JoinGroupView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Join") {
-                        guard let id = UUID(uuidString: groupIdString.trimmingCharacters(in: .whitespaces)) else {
-                            error = "Group ID must be a valid UUID"
-                            return
-                        }
                         error = nil
                         working = true
                         Task {
                             let joined = await groupStore.join(
-                                groupId: id,
-                                inviteCode: inviteCode.trimmingCharacters(in: .whitespaces)
+                                inviteCode: inviteCode.trimmingCharacters(in: .whitespaces).uppercased()
                             )
                             working = false
                             if joined != nil { dismiss() }
                             else { error = groupStore.lastError ?? "Could not join" }
                         }
                     }
-                    .disabled(working || groupIdString.isEmpty || inviteCode.isEmpty)
+                    .disabled(working || inviteCode.count < 4)
                 }
             }
         }

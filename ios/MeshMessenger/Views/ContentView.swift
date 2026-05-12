@@ -5,10 +5,12 @@ struct ContentView: View {
 
     var body: some View {
         Group {
-            if session.isSignedIn {
-                MainTabView()
-            } else {
+            if !session.isSignedIn {
                 LoginView()
+            } else if !session.isEmailVerified {
+                EmailVerificationView()
+            } else {
+                MainTabView()
             }
         }
     }

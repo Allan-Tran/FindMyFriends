@@ -1,0 +1,20 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "relay",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "storedAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "groups",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "memberIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

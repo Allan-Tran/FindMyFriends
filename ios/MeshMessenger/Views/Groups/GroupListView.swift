@@ -65,9 +65,8 @@ struct GroupListView: View {
             }
             .task {
                 groupStore.loadLocal()
-                await groupStore.refresh(groupStore.groups.map(\.id))
+                groupStore.startObserving()
                 syncRouterGroups()
-                groupStore.broadcastSyncAll()
             }
             .onChange(of: groupStore.groups.map(\.id)) { _, _ in
                 syncRouterGroups()

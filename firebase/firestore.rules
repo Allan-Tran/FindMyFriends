@@ -1,0 +1,87 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function groupDoc(groupId) {
+      return get(/databases/$(database)/documents/groups/$(groupId)).data;
+    }
+
+    function isMember(groupId) {
+      return isSignedIn() &&
+             exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
+    }
+
+    function isAdmin(groupId) {
+      return isSignedIn() && groupDoc(groupId).adminId == request.auth.uid;
+    }
+
+    // Public profile per user. Anyone signed in can resolve a uid to a username.
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == userId
+                       && request.resource.data.keys().hasOnly([
+                            'email','username','usernameLower','createdAt','fcmToken','emailVerified'
+                          ]);
+      allow update: if isSignedIn() && request.auth.uid == userId
+                       && request.resource.data.username == resource.data.username
+                       && request.resource.data.usernameLower == resource.data.usernameLower
+                       && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if false;
+    }
+
+    // Username -> uid reservation, used to enforce uniqueness during signup.
+    match /usernames/{usernameLower} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // Invite-code -> groupId lookup. Knowing the code is the credential to join.
+    match /inviteCodes/{code} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isAdmin(request.resource.data.groupId);
+      allow update: if false;
+      allow delete: if isAdmin(resource.data.groupId);
+    }
+
+    match /groups/{groupId} {
+      allow read: if isMember(groupId);
+      allow create: if isVerified()
+                       && request.resource.data.adminId == request.auth.uid
+                       && request.resource.data.memberIds is list
+                       && request.resource.data.memberIds.hasOnly([request.auth.uid]);
+      allow update: if isAdmin(groupId);
+      allow delete: if isAdmin(groupId);
+
+      match /members/{userId} {
+        allow read: if isMember(groupId);
+        // Self-join (with invite code verified client-side) or admin adding a member.
+        allow create: if isSignedIn() &&
+                         (request.auth.uid == userId || isAdmin(groupId)) &&
+                         request.resource.data.role in ['member','admin'];
+        allow update: if isAdmin(groupId);
+        // Admin can remove anyone; user can leave themselves.
+        allow delete: if isAdmin(groupId) || request.auth.uid == userId;
+      }
+
+      // Ephemeral relay messages — 24h TTL via expiresAt field.
+      match /relay/{messageId} {
+        allow read: if isMember(groupId);
+        allow create: if isMember(groupId)
+                         && request.resource.data.senderUid == request.auth.uid
+                         && request.resource.data.expiresAt > request.time;
+        allow update: if false;
+        allow delete: if isMember(groupId);
+      }
+    }
+  }
+}

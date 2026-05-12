@@ -5,7 +5,7 @@ import SwiftData
 final class LocalGroup: Identifiable {
     @Attribute(.unique) var id: UUID
     var name: String
-    var adminId: UUID
+    var adminId: String
     var inviteCode: String
     var createdAt: Date
     var memberUsernames: [String]
@@ -14,7 +14,7 @@ final class LocalGroup: Identifiable {
     init(
         id: UUID,
         name: String,
-        adminId: UUID,
+        adminId: String,
         inviteCode: String,
         createdAt: Date,
         memberUsernames: [String] = [],

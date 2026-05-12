@@ -14,16 +14,18 @@ struct MeshMessengerApp: App {
     @StateObject private var pushCenter: PushNotificationCenter
 
     init() {
+        FirebaseManager.configure()
+
         let session = AuthSession()
         _session = StateObject(wrappedValue: session)
 
         let mesh = MeshEngine()
         _meshEngine = StateObject(wrappedValue: mesh)
+
         let proximity = ProximityEngine()
         _proximityEngine = StateObject(wrappedValue: proximity)
 
-        let relay = RelayAPI(client: session.apiClient)
-        let sync = SyncEngine(relayAPI: relay)
+        let sync = SyncEngine()
         _syncEngine = StateObject(wrappedValue: sync)
 
         let context = PersistenceController.shared.mainContext
@@ -40,14 +42,17 @@ struct MeshMessengerApp: App {
             peerRepository: peerRepo
         )
         _router = StateObject(wrappedValue: router)
-        let store = GroupStore(client: session.apiClient, repository: groupRepo)
+
+        let store = GroupStore(session: session, repository: groupRepo)
         store.router = router
         _groupStore = StateObject(wrappedValue: store)
 
-        let push = PushNotificationCenter(client: session.apiClient)
-        push.attach(router: router)
+        let push = PushNotificationCenter()
+        push.attach(session: session, router: router)
         _pushCenter = StateObject(wrappedValue: push)
         AppDelegate.pushCenter = push
+
+        session.observeAuthState()
     }
 
     var body: some Scene {
@@ -61,12 +66,13 @@ struct MeshMessengerApp: App {
                 .environmentObject(groupStore)
                 .environmentObject(pushCenter)
                 .modelContainer(PersistenceController.shared.container)
-                .task(id: session.isSignedIn) {
-                    if session.isSignedIn {
+                .task(id: session.isSignedIn && session.isEmailVerified) {
+                    if session.isSignedIn && session.isEmailVerified {
                         await pushCenter.requestAuthorizationAndRegister()
-                    } else {
+                    } else if !session.isSignedIn {
                         await pushCenter.unregister()
                         router.stop()
+                        groupStore.stopObserving()
                     }
                 }
         }

@@ -1,103 +1,102 @@
 import Foundation
 import Combine
+import FirebaseAuth
+import FirebaseFirestore
 
 @MainActor
-final class AuthSession: ObservableObject, AccessTokenProvider {
-    @Published private(set) var session: StoredSession?
+final class AuthSession: ObservableObject {
+    @Published private(set) var firebaseUser: User?
+    @Published private(set) var profile: FirestoreUser?
     @Published private(set) var isAuthenticating: Bool = false
+    @Published private(set) var isEmailVerified: Bool = false
     @Published var lastError: String?
 
-    private var pendingPhoneNumber: String?
-    private lazy var unauthedClient: APIClient = APIClient(tokenProvider: nil)
-    private lazy var authedClient: APIClient = APIClient(tokenProvider: self)
-    private lazy var authAPI: AuthAPI = AuthAPI(client: unauthedClient)
-    private(set) lazy var apiClient: APIClient = authedClient
+    private let authService: AuthService
+    private let userService: UserService
+    private var authStateHandle: AuthStateDidChangeListenerHandle?
 
-    private var refreshInFlight: Task<String, Error>?
-
-    init() {
-        self.session = TokenStore.load()
+    init(authService: AuthService = AuthService(), userService: UserService = UserService()) {
+        self.authService = authService
+        self.userService = userService
     }
 
-    var isSignedIn: Bool { session != nil }
-    var currentUserId: UUID? { session?.userId }
-    var currentUsername: String? { session?.username }
+    var currentUid: String? { firebaseUser?.uid }
+    var currentUsername: String? { profile?.username }
+    var isSignedIn: Bool { firebaseUser != nil }
 
-    func currentAccessToken() async -> String? {
-        guard let s = session else { return nil }
-        if Date() < s.accessTokenExpiresAt.addingTimeInterval(-30) {
-            return s.accessToken
+    func observeAuthState() {
+        if authStateHandle != nil { return }
+        authStateHandle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.firebaseUser = user
+                self.isEmailVerified = user?.isEmailVerified ?? false
+                if let user = user {
+                    self.profile = try? await self.userService.get(uid: user.uid)
+                } else {
+                    self.profile = nil
+                }
+            }
         }
-        return try? await refresh()
     }
 
-    func refresh() async throws -> String {
-        if let existing = refreshInFlight { return try await existing.value }
-        let task = Task<String, Error> { [weak self] in
-            defer { Task { @MainActor in self?.refreshInFlight = nil } }
-            guard let self else { throw APIError.notAuthenticated }
-            guard let s = self.session else { throw APIError.notAuthenticated }
-            let result = try await self.authAPI.refresh(refreshToken: s.refreshToken)
-            let new = StoredSession(
-                accessToken: result.accessToken,
-                accessTokenExpiresAt: result.accessTokenExpiresAt,
-                refreshToken: result.refreshToken,
-                refreshTokenExpiresAt: result.refreshTokenExpiresAt,
-                userId: result.userId,
-                username: result.username
-            )
-            try TokenStore.save(new)
-            await MainActor.run { self.session = new }
-            return new.accessToken
+    func signUp(email: String, password: String, username: String) async {
+        await run {
+            let user = try await self.authService.signUp(email: email, password: password, username: username)
+            self.firebaseUser = user
+            self.isEmailVerified = user.isEmailVerified
+            self.profile = try? await self.userService.get(uid: user.uid)
         }
-        refreshInFlight = task
-        return try await task.value
     }
 
-    func requestOtp(phoneNumber: String) async {
-        isAuthenticating = true
-        lastError = nil
+    func signIn(email: String, password: String) async {
+        await run {
+            let user = try await self.authService.signIn(email: email, password: password)
+            self.firebaseUser = user
+            self.isEmailVerified = user.isEmailVerified
+            self.profile = try? await self.userService.get(uid: user.uid)
+        }
+    }
+
+    func sendPasswordReset(to email: String) async {
+        await run {
+            try await self.authService.sendPasswordReset(to: email)
+        }
+    }
+
+    func resendVerificationEmail() async {
+        await run {
+            try await self.authService.resendVerificationEmail()
+        }
+    }
+
+    func refreshEmailVerified() async -> Bool {
         do {
-            try await authAPI.requestOtp(phoneNumber: phoneNumber)
-            pendingPhoneNumber = phoneNumber
+            let verified = try await authService.refreshEmailVerified()
+            self.isEmailVerified = verified
+            return verified
         } catch {
             lastError = (error as? LocalizedError)?.errorDescription ?? "\(error)"
+            return false
         }
-        isAuthenticating = false
-    }
-
-    func verifyOtp(otp: String, username: String?) async {
-        guard let phone = pendingPhoneNumber else {
-            lastError = "Request a code first"
-            return
-        }
-        isAuthenticating = true
-        lastError = nil
-        do {
-            let result = try await authAPI.verifyOtp(phoneNumber: phone, otp: otp, username: username)
-            let new = StoredSession(
-                accessToken: result.accessToken,
-                accessTokenExpiresAt: result.accessTokenExpiresAt,
-                refreshToken: result.refreshToken,
-                refreshTokenExpiresAt: result.refreshTokenExpiresAt,
-                userId: result.userId,
-                username: result.username
-            )
-            try TokenStore.save(new)
-            self.session = new
-            self.pendingPhoneNumber = nil
-        } catch {
-            lastError = (error as? LocalizedError)?.errorDescription ?? "\(error)"
-        }
-        isAuthenticating = false
     }
 
     func signOut() async {
-        if let s = session {
-            try? await authAPI.logout(refreshToken: s.refreshToken)
+        do {
+            try authService.signOut()
+        } catch {
+            lastError = (error as? LocalizedError)?.errorDescription ?? "\(error)"
         }
-        TokenStore.clear()
-        PeerIdentity.reset()
-        session = nil
+        firebaseUser = nil
+        profile = nil
+        isEmailVerified = false
+    }
+
+    private func run(_ work: @escaping () async throws -> Void) async {
+        isAuthenticating = true
+        lastError = nil
+        do { try await work() }
+        catch { lastError = (error as? LocalizedError)?.errorDescription ?? "\(error)" }
+        isAuthenticating = false
     }
 }

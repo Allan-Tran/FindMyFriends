@@ -2,21 +2,25 @@ import Foundation
 import UIKit
 import UserNotifications
 import Combine
+import FirebaseMessaging
 
 @MainActor
 final class PushNotificationCenter: NSObject, ObservableObject {
-    @Published private(set) var deviceToken: String?
+    @Published private(set) var fcmToken: String?
 
-    private let pushAPI: PushAPI
+    private let pushService: PushService
+    private weak var session: AuthSession?
     private weak var router: MessageRouter?
 
-    init(client: APIClient) {
-        self.pushAPI = PushAPI(client: client)
+    init(pushService: PushService = PushService(userService: UserService())) {
+        self.pushService = pushService
         super.init()
         UNUserNotificationCenter.current().delegate = self
+        Messaging.messaging().delegate = self
     }
 
-    func attach(router: MessageRouter) {
+    func attach(session: AuthSession, router: MessageRouter) {
+        self.session = session
         self.router = router
     }
 
@@ -26,19 +30,25 @@ final class PushNotificationCenter: NSObject, ObservableObject {
             if granted {
                 UIApplication.shared.registerForRemoteNotifications()
             }
-        } catch { }
+        } catch {
+            #if DEBUG
+            print("[Push] authorization error: \(error)")
+            #endif
+        }
     }
 
-    func handleDeviceToken(_ raw: Data) async {
-        let hex = raw.map { String(format: "%02x", $0) }.joined()
-        self.deviceToken = hex
-        try? await pushAPI.register(deviceToken: hex)
+    func handleApnsToken(_ raw: Data) {
+        pushService.setApnsToken(raw)
     }
 
-    func handleRegistrationFailure(_ error: Error) {
-        self.deviceToken = nil
+    func handleFcmToken(_ token: String?) async {
+        self.fcmToken = token
+        guard let token = token, let uid = session?.currentUid else { return }
+        try? await pushService.userService.setFcmToken(uid: uid, token: token)
     }
 
+    /// Called from AppDelegate on silent background notifications.
+    /// The Cloud Function sends `{groupId, messageId, kind:"relay"}` — we fetch and persist.
     func handleRemoteNotification(_ userInfo: [AnyHashable: Any]) async -> UIBackgroundFetchResult {
         guard let router = router else { return .noData }
         let ids = router.activeGroupIds
@@ -47,14 +57,20 @@ final class PushNotificationCenter: NSObject, ObservableObject {
     }
 
     func unregister() async {
-        guard let token = deviceToken else { return }
-        try? await pushAPI.unregister(deviceToken: token)
-        self.deviceToken = nil
+        guard let uid = session?.currentUid else { return }
+        await pushService.unregister(for: uid)
+        self.fcmToken = nil
     }
 }
 
 extension PushNotificationCenter: UNUserNotificationCenterDelegate {
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
         [.banner, .sound]
+    }
+}
+
+extension PushNotificationCenter: MessagingDelegate {
+    nonisolated func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+        Task { @MainActor in await self.handleFcmToken(fcmToken) }
     }
 }

@@ -8,16 +8,18 @@ service cloud.firestore {
     }
 
     function groupDoc(groupId) {
-      return get(/databases/$(database)/documents/groups/$(groupId)).data;
+      let doc = get(/databases/$(database)/documents/groups/$(groupId));
+      return doc != null ? doc.data : null;
+    }
+
+    function isAdmin(groupId) {
+      let docData = groupDoc(groupId);
+      return isSignedIn() && docData != null && docData.adminId == request.auth.uid;
     }
 
     function isMember(groupId) {
       return isSignedIn() &&
              exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
-    }
-
-    function isAdmin(groupId) {
-      return isSignedIn() && groupDoc(groupId).adminId == request.auth.uid;
     }
 
     // Public profile per user. Anyone signed in can resolve a uid to a username.
@@ -27,9 +29,11 @@ service cloud.firestore {
                        && request.resource.data.keys().hasOnly([
                             'email','username','usernameLower','createdAt','fcmToken','emailVerified'
                           ]);
-      allow update: if isSignedIn() && request.auth.uid == userId
-                       && !request.resource.data.diff(resource.data)
-                            .affectedKeys().hasAny(['username', 'usernameLower', 'createdAt']);
+      allow update: if isSignedIn()
+                    && request.auth.uid == userId
+                    && resource != null
+                    && !request.resource.data.diff(resource.data)
+                        .affectedKeys().hasAny(['username', 'usernameLower', 'createdAt']);
       allow delete: if false;
     }
 
@@ -40,12 +44,7 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // Invite-code -> groupId lookup. Knowing the code is the credential to join.
-    // NOTE: create cannot use isAdmin() here — during a batch write the group doc
-    // does not yet exist in Firestore when rules are evaluated, so get() returns null
-    // and the check always fails. Scoping to isVerified() + shape validation is
-    // sufficient because codes are random 8-char strings and the join flow validates
-    // the groupId independently.
+    // Invite-code -> groupId lookup.
     match /inviteCodes/{code} {
       allow read: if isSignedIn();
       allow create: if isSignedIn()
@@ -55,7 +54,7 @@ service cloud.firestore {
       allow delete: if isAdmin(resource.data.groupId);
     }
 
-    // Direct messages — two-party conversations with their own relay subcollection.
+    // Direct messages
     match /dms/{dmId} {
       function isDMParticipant() {
         return resource != null
@@ -84,33 +83,30 @@ service cloud.firestore {
     }
 
     match /groups/{groupId} {
-      // Direct memberIds check avoids an exists() call inside a collection query,
-      // which Firestore rejects for real-time listeners.
-      allow read: if isSignedIn() && request.auth.uid in resource.data.memberIds;
+      allow read: if isSignedIn() && resource != null && request.auth.uid in resource.data.memberIds;
       allow create: if isSignedIn()
                        && request.resource.data.adminId == request.auth.uid
                        && request.resource.data.memberIds is list
                        && request.resource.data.memberIds.hasOnly([request.auth.uid]);
-      // Admin can update anything; a joining member may only append their own uid to memberIds.
+                       
       allow update: if isAdmin(groupId)
-                       || (isSignedIn()
-                           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds'])
-                           && request.auth.uid in request.resource.data.memberIds
-                           && request.resource.data.memberIds.hasAll(resource.data.memberIds));
+                    ||
+                    (isSignedIn()
+                        && resource != null
+                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds'])
+                        && request.auth.uid in request.resource.data.memberIds
+                        && request.resource.data.memberIds.hasAll(resource.data.memberIds));
       allow delete: if isAdmin(groupId);
 
       match /members/{userId} {
         allow read: if isMember(groupId);
-        // Self-join (with invite code verified client-side) or admin adding a member.
         allow create: if isSignedIn() &&
                          (request.auth.uid == userId || isAdmin(groupId)) &&
                          request.resource.data.role in ['member','admin'];
         allow update: if isAdmin(groupId);
-        // Admin can remove anyone; user can leave themselves.
         allow delete: if isAdmin(groupId) || request.auth.uid == userId;
       }
 
-      // Ephemeral relay messages — 24h TTL via expiresAt field.
       match /relay/{messageId} {
         allow read: if isMember(groupId);
         allow create: if isMember(groupId)
@@ -120,23 +116,23 @@ service cloud.firestore {
         allow delete: if isMember(groupId);
       }
 
-      // Map pins — members place dots; pin owner or admin can remove.
       match /pins/{pinId} {
         allow read: if isMember(groupId);
         allow create: if isMember(groupId)
                          && request.resource.data.uid == request.auth.uid;
         allow update: if false;
         allow delete: if isMember(groupId)
+                         && resource != null
                          && (resource.data.uid == request.auth.uid || isAdmin(groupId));
       }
 
-      // Reports — any member can file one; only the group admin can read or resolve.
       match /reports/{reportId} {
         allow read: if isAdmin(groupId);
         allow create: if isMember(groupId)
                          && request.resource.data.reporterUid == request.auth.uid
                          && request.resource.data.status == 'pending';
         allow update: if isAdmin(groupId)
+                         && resource != null
                          && request.resource.data.diff(resource.data)
                               .affectedKeys().hasOnly(['status']);
         allow delete: if false;

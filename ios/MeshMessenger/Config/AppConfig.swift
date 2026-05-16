@@ -4,8 +4,13 @@ enum AppConfig {
     /// Set to true to point Auth, Firestore, and Storage at the local emulator
     /// suite. Run `firebase emulators:start` in firebase/ first.
     /// Simulator uses "localhost"; a physical device needs your Mac's LAN IP.
+    #if DEBUG
+    static let useEmulator: Bool = true
+    static let emulatorHost: String = "127.0.0.1"
+    #else
     static let useEmulator: Bool = false
-    static let emulatorHost: String = "localhost"
+    static let emulatorHost: String = ""
+    #endif
 
     static let multipeerServiceType = "mesh-msgr"
 

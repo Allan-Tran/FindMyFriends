@@ -15,7 +15,7 @@ struct MapService: Sendable {
         let ref = storage.reference().child("maps/\(groupId)/map.jpg")
         let meta = StorageMetadata()
         meta.contentType = "image/jpeg"
-        try await putData(data, to: ref, metadata: meta)
+        try await ref.putDataAsync(data, metadata: meta)
         let url = try await ref.downloadURLWithRetry()
         try await db.collection("groups").document(groupId)
             .updateData(["mapImageUrl": url.absoluteString])
@@ -26,7 +26,7 @@ struct MapService: Sendable {
         let ref = storage.reference().child("chat/\(groupId)/\(imageId).jpg")
         let meta = StorageMetadata()
         meta.contentType = "image/jpeg"
-        try await putData(data, to: ref, metadata: meta)
+        try await ref.putDataAsync(data, metadata: meta)
         return try await ref.downloadURLWithRetry().absoluteString
     }
 
@@ -34,20 +34,8 @@ struct MapService: Sendable {
         let ref = storage.reference().child("dms/\(dmId)/\(imageId).jpg")
         let meta = StorageMetadata()
         meta.contentType = "image/jpeg"
-        try await putData(data, to: ref, metadata: meta)
+        try await ref.putDataAsync(data, metadata: meta)
         return try await ref.downloadURLWithRetry().absoluteString
-    }
-
-    private func putData(_ data: Data, to ref: StorageReference, metadata: StorageMetadata) async throws {
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            ref.putData(data, metadata: metadata) { _, error in
-                if let error {
-                    continuation.resume(throwing: error)
-                } else {
-                    continuation.resume()
-                }
-            }
-        }
     }
 
     func observeMapUrl(groupId: String, onChange: @escaping (String?) -> Void) -> ListenerRegistration {

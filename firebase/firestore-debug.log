@@ -172,3 +172,600 @@ May 16, 2026 1:51:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channe
 INFO: Detected non-HTTP/2 connection.
 May 16, 2026 1:51:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
 INFO: Detected HTTP/2 connection.
+May 16, 2026 2:40:46 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected HTTP/2 connection.
+May 16, 2026 2:40:47 PM com.google.cloud.datastore.emulator.impl.context.EmulatorAuthorization warnAboutSecuredJwt
+WARNING: expected an unsecured JWT, the emulator does not validate JWTs and IS NOT SECURE
+May 16, 2026 2:40:47 PM com.google.cloud.datastore.emulator.impl.context.EmulatorAuthorization warnAboutSecuredJwt
+WARNING: expected an unsecured JWT, the emulator does not validate JWTs and IS NOT SECURE
+May 16, 2026 2:40:47 PM com.google.cloud.datastore.emulator.impl.util.WrappedStreamObserver onError
+WARNING: Operation failed: 
+evaluation error at L30:24 for 'update' @ L30, Null value error. for 'update' @ L30
+com.google.cloud.datastore.core.exception.DatastoreException: 
+evaluation error at L30:24 for 'update' @ L30, Null value error. for 'update' @ L30
+	at com.google.cloud.datastore.core.exception.DatastoreException$Builder.build(DatastoreException.java:152)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.verboseError(DefaultEmulatorRulesAuthorizer.java:349)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.withVerboseErrors(DefaultEmulatorRulesAuthorizer.java:326)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.checkCommit(DefaultEmulatorRulesAuthorizer.java:114)
+	at com.google.cloud.datastore.emulator.impl.firestore.FirestoreEmulatorHelper.commitHelper(FirestoreEmulatorHelper.java:386)
+	at com.google.cloud.datastore.emulator.impl.firestore.FirestoreEmulatorHelper.internalCommit(FirestoreEmulatorHelper.java:336)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1.internalCommit(CloudFirestoreV1.java:1245)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1.write(CloudFirestoreV1.java:1232)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.handleRequest(CloudFirestoreV1WriteStream.java:222)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.write(CloudFirestoreV1WriteStream.java:144)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.onNext(CloudFirestoreV1WriteStream.java:99)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.onNext(CloudFirestoreV1WriteStream.java:27)
+	at io.grpc.stub.ServerCalls$StreamingServerCallHandler$StreamingServerCallListener.onMessage(ServerCalls.java:262)
+	at io.grpc.ForwardingServerCallListener.onMessage(ForwardingServerCallListener.java:33)
+	at io.grpc.Contexts$ContextualizedServerCallListener.onMessage(Contexts.java:76)
+	at io.grpc.ForwardingServerCallListener.onMessage(ForwardingServerCallListener.java:33)
+	at io.grpc.Contexts$ContextualizedServerCallListener.onMessage(Contexts.java:76)
+	at io.grpc.internal.ServerCallImpl$ServerStreamListenerImpl.messagesAvailableInternal(ServerCallImpl.java:334)
+	at io.grpc.internal.ServerCallImpl$ServerStreamListenerImpl.messagesAvailable(ServerCallImpl.java:319)
+	at io.grpc.internal.ServerImpl$JumpToApplicationThreadServerStreamListener$1MessagesAvailable.runInContext(ServerImpl.java:834)
+	at io.grpc.internal.ContextRunnable.run(ContextRunnable.java:37)
+	at io.grpc.internal.SerializingExecutor.run(SerializingExecutor.java:133)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1090)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:614)
+	at java.base/java.lang.Thread.run(Thread.java:1516)
+Caused by: com.google.firebase.rules.runtime.common.EvaluationException: Error: security.rules line [31], column [55]. Null value error.
+	at com.google.firebase.rules.runtime.impl.DefaultEvaluator$TransformEvaluationException.apply(DefaultEvaluator.java:275)
+	at com.google.firebase.rules.runtime.impl.DefaultEvaluator$TransformEvaluationException.apply(DefaultEvaluator.java:261)
+	at com.google.common.util.concurrent.AbstractCatchingFuture$AsyncCatchingFuture.doFallback(AbstractCatchingFuture.java:207)
+	at com.google.common.util.concurrent.AbstractCatchingFuture$AsyncCatchingFuture.doFallback(AbstractCatchingFuture.java:194)
+	at com.google.common.util.concurrent.AbstractCatchingFuture.run(AbstractCatchingFuture.java:136)
+	at com.google.common.util.concurrent.DirectExecutor.execute(DirectExecutor.java:30)
+	at com.google.common.util.concurrent.AbstractFuture.executeListener(AbstractFuture.java:1024)
+	at com.google.common.util.concurrent.AbstractFuture.addListener(AbstractFuture.java:486)
+	at com.google.common.util.concurrent.FluentFuture$TrustedFuture.addListener(FluentFuture.java:122)
+	at com.google.common.util.concurrent.AbstractCatchingFuture.createAsync(AbstractCatchingFuture.java:58)
+	at com.google.common.util.concurrent.Futures.catchingAsync(Futures.java:409)
+	at com.google.firebase.rules.runtime.impl.DefaultEvaluator.evaluate(DefaultEvaluator.java:177)
+	at com.google.cloud.datastore.emulator.impl.rules.EmulatorRuleClient$EmulatorRuleEvaluator.evaluate(EmulatorRuleClient.java:88)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer.lambda$fullEvaluate$0(AsyncTwoPhaseRulesAuthorizer.java:1001)
+	at com.google.cloud.datastore.computation.Computation.tryCatch(Computation.java:469)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer.fullEvaluate(AsyncTwoPhaseRulesAuthorizer.java:1000)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer$CommitAuthorizerImpl.lambda$checkWrite$0(AsyncTwoPhaseRulesAuthorizer.java:1237)
+	at com.google.cloud.datastore.computation.Computation.lambda$tryClose$1(Computation.java:738)
+	at com.google.cloud.datastore.computation.Computation.tryCatch(Computation.java:469)
+	at com.google.cloud.datastore.computation.Computation.tryFinally(Computation.java:705)
+	at com.google.cloud.datastore.computation.Computation.tryFinally(Computation.java:711)
+	at com.google.cloud.datastore.computation.Computation.tryClose(Computation.java:738)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer$CommitAuthorizerImpl.checkWrite(AsyncTwoPhaseRulesAuthorizer.java:1206)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.lambda$checkCommit$2(DefaultEmulatorRulesAuthorizer.java:125)
+	at com.google.cloud.datastore.computation.Computation.run(Computation.java:81)
+	at com.google.cloud.datastore.computation.Computation$Terminated.toFuture(Computation.java:947)
+	at com.google.cloud.datastore.computation.Computation.toFuture(Computation.java:92)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.finish(DefaultEmulatorRulesAuthorizer.java:308)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.lambda$checkCommit$0(DefaultEmulatorRulesAuthorizer.java:123)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.withVerboseErrors(DefaultEmulatorRulesAuthorizer.java:321)
+	... 22 more
+
+May 16, 2026 2:41:02 PM com.google.cloud.datastore.emulator.impl.context.EmulatorAuthorization warnAboutSecuredJwt
+WARNING: expected an unsecured JWT, the emulator does not validate JWTs and IS NOT SECURE
+May 16, 2026 2:41:02 PM com.google.cloud.datastore.emulator.impl.util.WrappedStreamObserver onError
+WARNING: Operation failed: 
+evaluation error at L116:26 for 'create' @ L116, false for 'update' @ L119, false for 'create' @ L116
+com.google.cloud.datastore.core.exception.DatastoreException: 
+evaluation error at L116:26 for 'create' @ L116, false for 'update' @ L119, false for 'create' @ L116
+	at com.google.cloud.datastore.core.exception.DatastoreException$Builder.build(DatastoreException.java:152)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.verboseError(DefaultEmulatorRulesAuthorizer.java:349)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.withVerboseErrors(DefaultEmulatorRulesAuthorizer.java:326)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.checkCommit(DefaultEmulatorRulesAuthorizer.java:114)
+	at com.google.cloud.datastore.emulator.impl.firestore.FirestoreEmulatorHelper.commitHelper(FirestoreEmulatorHelper.java:386)
+	at com.google.cloud.datastore.emulator.impl.firestore.FirestoreEmulatorHelper.internalCommit(FirestoreEmulatorHelper.java:336)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1.internalCommit(CloudFirestoreV1.java:1245)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1.write(CloudFirestoreV1.java:1232)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.handleRequest(CloudFirestoreV1WriteStream.java:222)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.write(CloudFirestoreV1WriteStream.java:144)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.onNext(CloudFirestoreV1WriteStream.java:99)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.onNext(CloudFirestoreV1WriteStream.java:27)
+	at io.grpc.stub.ServerCalls$StreamingServerCallHandler$StreamingServerCallListener.onMessage(ServerCalls.java:262)
+	at io.grpc.ForwardingServerCallListener.onMessage(ForwardingServerCallListener.java:33)
+	at io.grpc.Contexts$ContextualizedServerCallListener.onMessage(Contexts.java:76)
+	at io.grpc.ForwardingServerCallListener.onMessage(ForwardingServerCallListener.java:33)
+	at io.grpc.Contexts$ContextualizedServerCallListener.onMessage(Contexts.java:76)
+	at io.grpc.internal.ServerCallImpl$ServerStreamListenerImpl.messagesAvailableInternal(ServerCallImpl.java:334)
+	at io.grpc.internal.ServerCallImpl$ServerStreamListenerImpl.messagesAvailable(ServerCallImpl.java:319)
+	at io.grpc.internal.ServerImpl$JumpToApplicationThreadServerStreamListener$1MessagesAvailable.runInContext(ServerImpl.java:834)
+	at io.grpc.internal.ContextRunnable.run(ContextRunnable.java:37)
+	at io.grpc.internal.SerializingExecutor.run(SerializingExecutor.java:133)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1090)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:614)
+	at java.base/java.lang.Thread.run(Thread.java:1516)
+
+May 16, 2026 2:42:44 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected HTTP/2 connection.
+May 16, 2026 2:42:44 PM com.google.cloud.datastore.emulator.impl.context.EmulatorAuthorization warnAboutSecuredJwt
+WARNING: expected an unsecured JWT, the emulator does not validate JWTs and IS NOT SECURE
+May 16, 2026 2:42:44 PM com.google.cloud.datastore.emulator.impl.util.WrappedStreamObserver onError
+WARNING: Operation failed: 
+evaluation error at L95:24 for 'update' @ L95, Null value error. for 'update' @ L95
+com.google.cloud.datastore.core.exception.DatastoreException: 
+evaluation error at L95:24 for 'update' @ L95, Null value error. for 'update' @ L95
+	at com.google.cloud.datastore.core.exception.DatastoreException$Builder.build(DatastoreException.java:152)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.verboseError(DefaultEmulatorRulesAuthorizer.java:349)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.withVerboseErrors(DefaultEmulatorRulesAuthorizer.java:326)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.checkCommit(DefaultEmulatorRulesAuthorizer.java:114)
+	at com.google.cloud.datastore.emulator.impl.firestore.FirestoreEmulatorHelper.commitHelper(FirestoreEmulatorHelper.java:386)
+	at com.google.cloud.datastore.emulator.impl.firestore.FirestoreEmulatorHelper.internalCommit(FirestoreEmulatorHelper.java:336)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1.internalCommit(CloudFirestoreV1.java:1245)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1.write(CloudFirestoreV1.java:1232)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.handleRequest(CloudFirestoreV1WriteStream.java:222)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.write(CloudFirestoreV1WriteStream.java:144)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.onNext(CloudFirestoreV1WriteStream.java:99)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.onNext(CloudFirestoreV1WriteStream.java:27)
+	at io.grpc.stub.ServerCalls$StreamingServerCallHandler$StreamingServerCallListener.onMessage(ServerCalls.java:262)
+	at io.grpc.ForwardingServerCallListener.onMessage(ForwardingServerCallListener.java:33)
+	at io.grpc.Contexts$ContextualizedServerCallListener.onMessage(Contexts.java:76)
+	at io.grpc.ForwardingServerCallListener.onMessage(ForwardingServerCallListener.java:33)
+	at io.grpc.Contexts$ContextualizedServerCallListener.onMessage(Contexts.java:76)
+	at io.grpc.internal.ServerCallImpl$ServerStreamListenerImpl.messagesAvailableInternal(ServerCallImpl.java:334)
+	at io.grpc.internal.ServerCallImpl$ServerStreamListenerImpl.messagesAvailable(ServerCallImpl.java:319)
+	at io.grpc.internal.ServerImpl$JumpToApplicationThreadServerStreamListener$1MessagesAvailable.runInContext(ServerImpl.java:834)
+	at io.grpc.internal.ContextRunnable.run(ContextRunnable.java:37)
+	at io.grpc.internal.SerializingExecutor.run(SerializingExecutor.java:133)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1090)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:614)
+	at java.base/java.lang.Thread.run(Thread.java:1516)
+Caused by: com.google.firebase.rules.runtime.common.EvaluationException: Error: security.rules line [11], column [14]. Null value error.
+	at com.google.firebase.rules.runtime.impl.DefaultEvaluator$TransformEvaluationException.apply(DefaultEvaluator.java:275)
+	at com.google.firebase.rules.runtime.impl.DefaultEvaluator$TransformEvaluationException.apply(DefaultEvaluator.java:261)
+	at com.google.common.util.concurrent.AbstractCatchingFuture$AsyncCatchingFuture.doFallback(AbstractCatchingFuture.java:207)
+	at com.google.common.util.concurrent.AbstractCatchingFuture$AsyncCatchingFuture.doFallback(AbstractCatchingFuture.java:194)
+	at com.google.common.util.concurrent.AbstractCatchingFuture.run(AbstractCatchingFuture.java:136)
+	at com.google.common.util.concurrent.DirectExecutor.execute(DirectExecutor.java:30)
+	at com.google.common.util.concurrent.AbstractFuture.executeListener(AbstractFuture.java:1024)
+	at com.google.common.util.concurrent.AbstractFuture.addListener(AbstractFuture.java:486)
+	at com.google.common.util.concurrent.FluentFuture$TrustedFuture.addListener(FluentFuture.java:122)
+	at com.google.common.util.concurrent.AbstractCatchingFuture.createAsync(AbstractCatchingFuture.java:58)
+	at com.google.common.util.concurrent.Futures.catchingAsync(Futures.java:409)
+	at com.google.firebase.rules.runtime.impl.DefaultEvaluator.evaluate(DefaultEvaluator.java:177)
+	at com.google.cloud.datastore.emulator.impl.rules.EmulatorRuleClient$EmulatorRuleEvaluator.evaluate(EmulatorRuleClient.java:88)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer.lambda$fullEvaluate$0(AsyncTwoPhaseRulesAuthorizer.java:1001)
+	at com.google.cloud.datastore.computation.Computation.tryCatch(Computation.java:469)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer.fullEvaluate(AsyncTwoPhaseRulesAuthorizer.java:1000)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer$CommitAuthorizerImpl.lambda$checkWrite$0(AsyncTwoPhaseRulesAuthorizer.java:1237)
+	at com.google.cloud.datastore.computation.Computation.lambda$tryClose$1(Computation.java:738)
+	at com.google.cloud.datastore.computation.Computation.tryCatch(Computation.java:469)
+	at com.google.cloud.datastore.computation.Computation.tryFinally(Computation.java:705)
+	at com.google.cloud.datastore.computation.Computation.tryFinally(Computation.java:711)
+	at com.google.cloud.datastore.computation.Computation.tryClose(Computation.java:738)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer$CommitAuthorizerImpl.checkWrite(AsyncTwoPhaseRulesAuthorizer.java:1206)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.lambda$checkCommit$2(DefaultEmulatorRulesAuthorizer.java:125)
+	at com.google.cloud.datastore.computation.Computation.run(Computation.java:81)
+	at com.google.cloud.datastore.computation.Computation$Terminated.toFuture(Computation.java:947)
+	at com.google.cloud.datastore.computation.Computation.toFuture(Computation.java:92)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.finish(DefaultEmulatorRulesAuthorizer.java:308)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.lambda$checkCommit$0(DefaultEmulatorRulesAuthorizer.java:123)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.withVerboseErrors(DefaultEmulatorRulesAuthorizer.java:321)
+	... 22 more
+
+May 16, 2026 2:43:01 PM com.google.cloud.datastore.emulator.impl.context.EmulatorAuthorization warnAboutSecuredJwt
+WARNING: expected an unsecured JWT, the emulator does not validate JWTs and IS NOT SECURE
+May 16, 2026 2:43:10 PM com.google.cloud.datastore.emulator.impl.context.EmulatorAuthorization warnAboutSecuredJwt
+WARNING: expected an unsecured JWT, the emulator does not validate JWTs and IS NOT SECURE
+May 16, 2026 2:43:10 PM com.google.cloud.datastore.emulator.impl.util.WrappedStreamObserver onError
+WARNING: Operation failed: 
+evaluation error at L95:24 for 'update' @ L95, Null value error. for 'update' @ L95
+com.google.cloud.datastore.core.exception.DatastoreException: 
+evaluation error at L95:24 for 'update' @ L95, Null value error. for 'update' @ L95
+	at com.google.cloud.datastore.core.exception.DatastoreException$Builder.build(DatastoreException.java:152)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.verboseError(DefaultEmulatorRulesAuthorizer.java:349)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.withVerboseErrors(DefaultEmulatorRulesAuthorizer.java:326)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.checkCommit(DefaultEmulatorRulesAuthorizer.java:114)
+	at com.google.cloud.datastore.emulator.impl.firestore.FirestoreEmulatorHelper.commitHelper(FirestoreEmulatorHelper.java:386)
+	at com.google.cloud.datastore.emulator.impl.firestore.FirestoreEmulatorHelper.internalCommit(FirestoreEmulatorHelper.java:336)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1.internalCommit(CloudFirestoreV1.java:1245)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1.write(CloudFirestoreV1.java:1232)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.handleRequest(CloudFirestoreV1WriteStream.java:222)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.write(CloudFirestoreV1WriteStream.java:144)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.onNext(CloudFirestoreV1WriteStream.java:99)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.onNext(CloudFirestoreV1WriteStream.java:27)
+	at io.grpc.stub.ServerCalls$StreamingServerCallHandler$StreamingServerCallListener.onMessage(ServerCalls.java:262)
+	at io.grpc.ForwardingServerCallListener.onMessage(ForwardingServerCallListener.java:33)
+	at io.grpc.Contexts$ContextualizedServerCallListener.onMessage(Contexts.java:76)
+	at io.grpc.ForwardingServerCallListener.onMessage(ForwardingServerCallListener.java:33)
+	at io.grpc.Contexts$ContextualizedServerCallListener.onMessage(Contexts.java:76)
+	at io.grpc.internal.ServerCallImpl$ServerStreamListenerImpl.messagesAvailableInternal(ServerCallImpl.java:334)
+	at io.grpc.internal.ServerCallImpl$ServerStreamListenerImpl.messagesAvailable(ServerCallImpl.java:319)
+	at io.grpc.internal.ServerImpl$JumpToApplicationThreadServerStreamListener$1MessagesAvailable.runInContext(ServerImpl.java:834)
+	at io.grpc.internal.ContextRunnable.run(ContextRunnable.java:37)
+	at io.grpc.internal.SerializingExecutor.run(SerializingExecutor.java:133)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1090)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:614)
+	at java.base/java.lang.Thread.run(Thread.java:1516)
+Caused by: com.google.firebase.rules.runtime.common.EvaluationException: Error: security.rules line [11], column [14]. Null value error.
+	at com.google.firebase.rules.runtime.impl.DefaultEvaluator$TransformEvaluationException.apply(DefaultEvaluator.java:275)
+	at com.google.firebase.rules.runtime.impl.DefaultEvaluator$TransformEvaluationException.apply(DefaultEvaluator.java:261)
+	at com.google.common.util.concurrent.AbstractCatchingFuture$AsyncCatchingFuture.doFallback(AbstractCatchingFuture.java:207)
+	at com.google.common.util.concurrent.AbstractCatchingFuture$AsyncCatchingFuture.doFallback(AbstractCatchingFuture.java:194)
+	at com.google.common.util.concurrent.AbstractCatchingFuture.run(AbstractCatchingFuture.java:136)
+	at com.google.common.util.concurrent.DirectExecutor.execute(DirectExecutor.java:30)
+	at com.google.common.util.concurrent.AbstractFuture.executeListener(AbstractFuture.java:1024)
+	at com.google.common.util.concurrent.AbstractFuture.addListener(AbstractFuture.java:486)
+	at com.google.common.util.concurrent.FluentFuture$TrustedFuture.addListener(FluentFuture.java:122)
+	at com.google.common.util.concurrent.AbstractCatchingFuture.createAsync(AbstractCatchingFuture.java:58)
+	at com.google.common.util.concurrent.Futures.catchingAsync(Futures.java:409)
+	at com.google.firebase.rules.runtime.impl.DefaultEvaluator.evaluate(DefaultEvaluator.java:177)
+	at com.google.cloud.datastore.emulator.impl.rules.EmulatorRuleClient$EmulatorRuleEvaluator.evaluate(EmulatorRuleClient.java:88)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer.lambda$fullEvaluate$0(AsyncTwoPhaseRulesAuthorizer.java:1001)
+	at com.google.cloud.datastore.computation.Computation.tryCatch(Computation.java:469)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer.fullEvaluate(AsyncTwoPhaseRulesAuthorizer.java:1000)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer$CommitAuthorizerImpl.lambda$checkWrite$0(AsyncTwoPhaseRulesAuthorizer.java:1237)
+	at com.google.cloud.datastore.computation.Computation.lambda$tryClose$1(Computation.java:738)
+	at com.google.cloud.datastore.computation.Computation.tryCatch(Computation.java:469)
+	at com.google.cloud.datastore.computation.Computation.tryFinally(Computation.java:705)
+	at com.google.cloud.datastore.computation.Computation.tryFinally(Computation.java:711)
+	at com.google.cloud.datastore.computation.Computation.tryClose(Computation.java:738)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer$CommitAuthorizerImpl.checkWrite(AsyncTwoPhaseRulesAuthorizer.java:1206)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.lambda$checkCommit$2(DefaultEmulatorRulesAuthorizer.java:125)
+	at com.google.cloud.datastore.computation.Computation.run(Computation.java:81)
+	at com.google.cloud.datastore.computation.Computation$Terminated.toFuture(Computation.java:947)
+	at com.google.cloud.datastore.computation.Computation.toFuture(Computation.java:92)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.finish(DefaultEmulatorRulesAuthorizer.java:308)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.lambda$checkCommit$0(DefaultEmulatorRulesAuthorizer.java:123)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.withVerboseErrors(DefaultEmulatorRulesAuthorizer.java:321)
+	... 22 more
+
+May 16, 2026 2:46:02 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+May 16, 2026 2:46:02 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected HTTP/2 connection.
+May 16, 2026 2:46:37 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected HTTP/2 connection.
+May 16, 2026 2:46:37 PM com.google.cloud.datastore.emulator.impl.context.EmulatorAuthorization warnAboutSecuredJwt
+WARNING: expected an unsecured JWT, the emulator does not validate JWTs and IS NOT SECURE
+May 16, 2026 2:46:37 PM com.google.cloud.datastore.emulator.impl.context.EmulatorAuthorization warnAboutSecuredJwt
+WARNING: expected an unsecured JWT, the emulator does not validate JWTs and IS NOT SECURE
+May 16, 2026 2:46:37 PM com.google.cloud.datastore.emulator.impl.util.WrappedStreamObserver onError
+WARNING: Operation failed: 
+evaluation error at L30:24 for 'update' @ L30, Null value error. for 'update' @ L30
+com.google.cloud.datastore.core.exception.DatastoreException: 
+evaluation error at L30:24 for 'update' @ L30, Null value error. for 'update' @ L30
+	at com.google.cloud.datastore.core.exception.DatastoreException$Builder.build(DatastoreException.java:152)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.verboseError(DefaultEmulatorRulesAuthorizer.java:349)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.withVerboseErrors(DefaultEmulatorRulesAuthorizer.java:326)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.checkCommit(DefaultEmulatorRulesAuthorizer.java:114)
+	at com.google.cloud.datastore.emulator.impl.firestore.FirestoreEmulatorHelper.commitHelper(FirestoreEmulatorHelper.java:386)
+	at com.google.cloud.datastore.emulator.impl.firestore.FirestoreEmulatorHelper.internalCommit(FirestoreEmulatorHelper.java:336)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1.internalCommit(CloudFirestoreV1.java:1245)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1.write(CloudFirestoreV1.java:1232)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.handleRequest(CloudFirestoreV1WriteStream.java:222)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.write(CloudFirestoreV1WriteStream.java:144)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.onNext(CloudFirestoreV1WriteStream.java:99)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.onNext(CloudFirestoreV1WriteStream.java:27)
+	at io.grpc.stub.ServerCalls$StreamingServerCallHandler$StreamingServerCallListener.onMessage(ServerCalls.java:262)
+	at io.grpc.ForwardingServerCallListener.onMessage(ForwardingServerCallListener.java:33)
+	at io.grpc.Contexts$ContextualizedServerCallListener.onMessage(Contexts.java:76)
+	at io.grpc.ForwardingServerCallListener.onMessage(ForwardingServerCallListener.java:33)
+	at io.grpc.Contexts$ContextualizedServerCallListener.onMessage(Contexts.java:76)
+	at io.grpc.internal.ServerCallImpl$ServerStreamListenerImpl.messagesAvailableInternal(ServerCallImpl.java:334)
+	at io.grpc.internal.ServerCallImpl$ServerStreamListenerImpl.messagesAvailable(ServerCallImpl.java:319)
+	at io.grpc.internal.ServerImpl$JumpToApplicationThreadServerStreamListener$1MessagesAvailable.runInContext(ServerImpl.java:834)
+	at io.grpc.internal.ContextRunnable.run(ContextRunnable.java:37)
+	at io.grpc.internal.SerializingExecutor.run(SerializingExecutor.java:133)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1090)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:614)
+	at java.base/java.lang.Thread.run(Thread.java:1516)
+Caused by: com.google.firebase.rules.runtime.common.EvaluationException: Error: security.rules line [31], column [55]. Null value error.
+	at com.google.firebase.rules.runtime.impl.DefaultEvaluator$TransformEvaluationException.apply(DefaultEvaluator.java:275)
+	at com.google.firebase.rules.runtime.impl.DefaultEvaluator$TransformEvaluationException.apply(DefaultEvaluator.java:261)
+	at com.google.common.util.concurrent.AbstractCatchingFuture$AsyncCatchingFuture.doFallback(AbstractCatchingFuture.java:207)
+	at com.google.common.util.concurrent.AbstractCatchingFuture$AsyncCatchingFuture.doFallback(AbstractCatchingFuture.java:194)
+	at com.google.common.util.concurrent.AbstractCatchingFuture.run(AbstractCatchingFuture.java:136)
+	at com.google.common.util.concurrent.DirectExecutor.execute(DirectExecutor.java:30)
+	at com.google.common.util.concurrent.AbstractFuture.executeListener(AbstractFuture.java:1024)
+	at com.google.common.util.concurrent.AbstractFuture.addListener(AbstractFuture.java:486)
+	at com.google.common.util.concurrent.FluentFuture$TrustedFuture.addListener(FluentFuture.java:122)
+	at com.google.common.util.concurrent.AbstractCatchingFuture.createAsync(AbstractCatchingFuture.java:58)
+	at com.google.common.util.concurrent.Futures.catchingAsync(Futures.java:409)
+	at com.google.firebase.rules.runtime.impl.DefaultEvaluator.evaluate(DefaultEvaluator.java:177)
+	at com.google.cloud.datastore.emulator.impl.rules.EmulatorRuleClient$EmulatorRuleEvaluator.evaluate(EmulatorRuleClient.java:88)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer.lambda$fullEvaluate$0(AsyncTwoPhaseRulesAuthorizer.java:1001)
+	at com.google.cloud.datastore.computation.Computation.tryCatch(Computation.java:469)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer.fullEvaluate(AsyncTwoPhaseRulesAuthorizer.java:1000)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer$CommitAuthorizerImpl.lambda$checkWrite$0(AsyncTwoPhaseRulesAuthorizer.java:1237)
+	at com.google.cloud.datastore.computation.Computation.lambda$tryClose$1(Computation.java:738)
+	at com.google.cloud.datastore.computation.Computation.tryCatch(Computation.java:469)
+	at com.google.cloud.datastore.computation.Computation.tryFinally(Computation.java:705)
+	at com.google.cloud.datastore.computation.Computation.tryFinally(Computation.java:711)
+	at com.google.cloud.datastore.computation.Computation.tryClose(Computation.java:738)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer$CommitAuthorizerImpl.checkWrite(AsyncTwoPhaseRulesAuthorizer.java:1206)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.lambda$checkCommit$2(DefaultEmulatorRulesAuthorizer.java:125)
+	at com.google.cloud.datastore.computation.Computation.run(Computation.java:81)
+	at com.google.cloud.datastore.computation.Computation$Terminated.toFuture(Computation.java:947)
+	at com.google.cloud.datastore.computation.Computation.toFuture(Computation.java:92)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.finish(DefaultEmulatorRulesAuthorizer.java:308)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.lambda$checkCommit$0(DefaultEmulatorRulesAuthorizer.java:123)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.withVerboseErrors(DefaultEmulatorRulesAuthorizer.java:321)
+	... 22 more
+
+May 16, 2026 2:46:55 PM com.google.cloud.datastore.emulator.impl.context.EmulatorAuthorization warnAboutSecuredJwt
+WARNING: expected an unsecured JWT, the emulator does not validate JWTs and IS NOT SECURE
+May 16, 2026 2:46:55 PM com.google.cloud.datastore.emulator.impl.util.WrappedStreamObserver onError
+WARNING: Operation failed: 
+evaluation error at L101:24 for 'update' @ L101, Null value error. for 'update' @ L101
+com.google.cloud.datastore.core.exception.DatastoreException: 
+evaluation error at L101:24 for 'update' @ L101, Null value error. for 'update' @ L101
+	at com.google.cloud.datastore.core.exception.DatastoreException$Builder.build(DatastoreException.java:152)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.verboseError(DefaultEmulatorRulesAuthorizer.java:349)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.withVerboseErrors(DefaultEmulatorRulesAuthorizer.java:326)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.checkCommit(DefaultEmulatorRulesAuthorizer.java:114)
+	at com.google.cloud.datastore.emulator.impl.firestore.FirestoreEmulatorHelper.commitHelper(FirestoreEmulatorHelper.java:386)
+	at com.google.cloud.datastore.emulator.impl.firestore.FirestoreEmulatorHelper.internalCommit(FirestoreEmulatorHelper.java:336)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1.internalCommit(CloudFirestoreV1.java:1245)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1.write(CloudFirestoreV1.java:1232)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.handleRequest(CloudFirestoreV1WriteStream.java:222)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.write(CloudFirestoreV1WriteStream.java:144)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.onNext(CloudFirestoreV1WriteStream.java:99)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.onNext(CloudFirestoreV1WriteStream.java:27)
+	at io.grpc.stub.ServerCalls$StreamingServerCallHandler$StreamingServerCallListener.onMessage(ServerCalls.java:262)
+	at io.grpc.ForwardingServerCallListener.onMessage(ForwardingServerCallListener.java:33)
+	at io.grpc.Contexts$ContextualizedServerCallListener.onMessage(Contexts.java:76)
+	at io.grpc.ForwardingServerCallListener.onMessage(ForwardingServerCallListener.java:33)
+	at io.grpc.Contexts$ContextualizedServerCallListener.onMessage(Contexts.java:76)
+	at io.grpc.internal.ServerCallImpl$ServerStreamListenerImpl.messagesAvailableInternal(ServerCallImpl.java:334)
+	at io.grpc.internal.ServerCallImpl$ServerStreamListenerImpl.messagesAvailable(ServerCallImpl.java:319)
+	at io.grpc.internal.ServerImpl$JumpToApplicationThreadServerStreamListener$1MessagesAvailable.runInContext(ServerImpl.java:834)
+	at io.grpc.internal.ContextRunnable.run(ContextRunnable.java:37)
+	at io.grpc.internal.SerializingExecutor.run(SerializingExecutor.java:133)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1090)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:614)
+	at java.base/java.lang.Thread.run(Thread.java:1516)
+Caused by: com.google.firebase.rules.runtime.common.EvaluationException: Error: security.rules line [90], column [32]. Null value error.
+	at com.google.firebase.rules.runtime.impl.DefaultEvaluator$TransformEvaluationException.apply(DefaultEvaluator.java:275)
+	at com.google.firebase.rules.runtime.impl.DefaultEvaluator$TransformEvaluationException.apply(DefaultEvaluator.java:261)
+	at com.google.common.util.concurrent.AbstractCatchingFuture$AsyncCatchingFuture.doFallback(AbstractCatchingFuture.java:207)
+	at com.google.common.util.concurrent.AbstractCatchingFuture$AsyncCatchingFuture.doFallback(AbstractCatchingFuture.java:194)
+	at com.google.common.util.concurrent.AbstractCatchingFuture.run(AbstractCatchingFuture.java:136)
+	at com.google.common.util.concurrent.DirectExecutor.execute(DirectExecutor.java:30)
+	at com.google.common.util.concurrent.AbstractFuture.executeListener(AbstractFuture.java:1024)
+	at com.google.common.util.concurrent.AbstractFuture.addListener(AbstractFuture.java:486)
+	at com.google.common.util.concurrent.FluentFuture$TrustedFuture.addListener(FluentFuture.java:122)
+	at com.google.common.util.concurrent.AbstractCatchingFuture.createAsync(AbstractCatchingFuture.java:58)
+	at com.google.common.util.concurrent.Futures.catchingAsync(Futures.java:409)
+	at com.google.firebase.rules.runtime.impl.DefaultEvaluator.evaluate(DefaultEvaluator.java:177)
+	at com.google.cloud.datastore.emulator.impl.rules.EmulatorRuleClient$EmulatorRuleEvaluator.evaluate(EmulatorRuleClient.java:88)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer.lambda$fullEvaluate$0(AsyncTwoPhaseRulesAuthorizer.java:1001)
+	at com.google.cloud.datastore.computation.Computation.tryCatch(Computation.java:469)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer.fullEvaluate(AsyncTwoPhaseRulesAuthorizer.java:1000)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer$CommitAuthorizerImpl.lambda$checkWrite$0(AsyncTwoPhaseRulesAuthorizer.java:1237)
+	at com.google.cloud.datastore.computation.Computation.lambda$tryClose$1(Computation.java:738)
+	at com.google.cloud.datastore.computation.Computation.tryCatch(Computation.java:469)
+	at com.google.cloud.datastore.computation.Computation.tryFinally(Computation.java:705)
+	at com.google.cloud.datastore.computation.Computation.tryFinally(Computation.java:711)
+	at com.google.cloud.datastore.computation.Computation.tryClose(Computation.java:738)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer$CommitAuthorizerImpl.checkWrite(AsyncTwoPhaseRulesAuthorizer.java:1206)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.lambda$checkCommit$2(DefaultEmulatorRulesAuthorizer.java:125)
+	at com.google.cloud.datastore.computation.Computation.run(Computation.java:81)
+	at com.google.cloud.datastore.computation.Computation$Terminated.toFuture(Computation.java:947)
+	at com.google.cloud.datastore.computation.Computation.toFuture(Computation.java:92)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.finish(DefaultEmulatorRulesAuthorizer.java:308)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.lambda$checkCommit$0(DefaultEmulatorRulesAuthorizer.java:123)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.withVerboseErrors(DefaultEmulatorRulesAuthorizer.java:321)
+	... 22 more
+
+May 16, 2026 2:47:28 PM com.google.cloud.datastore.emulator.impl.context.EmulatorAuthorization warnAboutSecuredJwt
+WARNING: expected an unsecured JWT, the emulator does not validate JWTs and IS NOT SECURE
+May 16, 2026 2:47:28 PM com.google.cloud.datastore.emulator.impl.util.WrappedStreamObserver onError
+WARNING: Operation failed: 
+evaluation error at L101:24 for 'update' @ L101, Null value error. for 'update' @ L101
+com.google.cloud.datastore.core.exception.DatastoreException: 
+evaluation error at L101:24 for 'update' @ L101, Null value error. for 'update' @ L101
+	at com.google.cloud.datastore.core.exception.DatastoreException$Builder.build(DatastoreException.java:152)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.verboseError(DefaultEmulatorRulesAuthorizer.java:349)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.withVerboseErrors(DefaultEmulatorRulesAuthorizer.java:326)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.checkCommit(DefaultEmulatorRulesAuthorizer.java:114)
+	at com.google.cloud.datastore.emulator.impl.firestore.FirestoreEmulatorHelper.commitHelper(FirestoreEmulatorHelper.java:386)
+	at com.google.cloud.datastore.emulator.impl.firestore.FirestoreEmulatorHelper.internalCommit(FirestoreEmulatorHelper.java:336)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1.internalCommit(CloudFirestoreV1.java:1245)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1.write(CloudFirestoreV1.java:1232)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.handleRequest(CloudFirestoreV1WriteStream.java:222)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.write(CloudFirestoreV1WriteStream.java:144)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.onNext(CloudFirestoreV1WriteStream.java:99)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.onNext(CloudFirestoreV1WriteStream.java:27)
+	at io.grpc.stub.ServerCalls$StreamingServerCallHandler$StreamingServerCallListener.onMessage(ServerCalls.java:262)
+	at io.grpc.ForwardingServerCallListener.onMessage(ForwardingServerCallListener.java:33)
+	at io.grpc.Contexts$ContextualizedServerCallListener.onMessage(Contexts.java:76)
+	at io.grpc.ForwardingServerCallListener.onMessage(ForwardingServerCallListener.java:33)
+	at io.grpc.Contexts$ContextualizedServerCallListener.onMessage(Contexts.java:76)
+	at io.grpc.internal.ServerCallImpl$ServerStreamListenerImpl.messagesAvailableInternal(ServerCallImpl.java:334)
+	at io.grpc.internal.ServerCallImpl$ServerStreamListenerImpl.messagesAvailable(ServerCallImpl.java:319)
+	at io.grpc.internal.ServerImpl$JumpToApplicationThreadServerStreamListener$1MessagesAvailable.runInContext(ServerImpl.java:834)
+	at io.grpc.internal.ContextRunnable.run(ContextRunnable.java:37)
+	at io.grpc.internal.SerializingExecutor.run(SerializingExecutor.java:133)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1090)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:614)
+	at java.base/java.lang.Thread.run(Thread.java:1516)
+Caused by: com.google.firebase.rules.runtime.common.EvaluationException: Error: security.rules line [90], column [32]. Null value error.
+	at com.google.firebase.rules.runtime.impl.DefaultEvaluator$TransformEvaluationException.apply(DefaultEvaluator.java:275)
+	at com.google.firebase.rules.runtime.impl.DefaultEvaluator$TransformEvaluationException.apply(DefaultEvaluator.java:261)
+	at com.google.common.util.concurrent.AbstractCatchingFuture$AsyncCatchingFuture.doFallback(AbstractCatchingFuture.java:207)
+	at com.google.common.util.concurrent.AbstractCatchingFuture$AsyncCatchingFuture.doFallback(AbstractCatchingFuture.java:194)
+	at com.google.common.util.concurrent.AbstractCatchingFuture.run(AbstractCatchingFuture.java:136)
+	at com.google.common.util.concurrent.DirectExecutor.execute(DirectExecutor.java:30)
+	at com.google.common.util.concurrent.AbstractFuture.executeListener(AbstractFuture.java:1024)
+	at com.google.common.util.concurrent.AbstractFuture.addListener(AbstractFuture.java:486)
+	at com.google.common.util.concurrent.FluentFuture$TrustedFuture.addListener(FluentFuture.java:122)
+	at com.google.common.util.concurrent.AbstractCatchingFuture.createAsync(AbstractCatchingFuture.java:58)
+	at com.google.common.util.concurrent.Futures.catchingAsync(Futures.java:409)
+	at com.google.firebase.rules.runtime.impl.DefaultEvaluator.evaluate(DefaultEvaluator.java:177)
+	at com.google.cloud.datastore.emulator.impl.rules.EmulatorRuleClient$EmulatorRuleEvaluator.evaluate(EmulatorRuleClient.java:88)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer.lambda$fullEvaluate$0(AsyncTwoPhaseRulesAuthorizer.java:1001)
+	at com.google.cloud.datastore.computation.Computation.tryCatch(Computation.java:469)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer.fullEvaluate(AsyncTwoPhaseRulesAuthorizer.java:1000)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer$CommitAuthorizerImpl.lambda$checkWrite$0(AsyncTwoPhaseRulesAuthorizer.java:1237)
+	at com.google.cloud.datastore.computation.Computation.lambda$tryClose$1(Computation.java:738)
+	at com.google.cloud.datastore.computation.Computation.tryCatch(Computation.java:469)
+	at com.google.cloud.datastore.computation.Computation.tryFinally(Computation.java:705)
+	at com.google.cloud.datastore.computation.Computation.tryFinally(Computation.java:711)
+	at com.google.cloud.datastore.computation.Computation.tryClose(Computation.java:738)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer$CommitAuthorizerImpl.checkWrite(AsyncTwoPhaseRulesAuthorizer.java:1206)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.lambda$checkCommit$2(DefaultEmulatorRulesAuthorizer.java:125)
+	at com.google.cloud.datastore.computation.Computation.run(Computation.java:81)
+	at com.google.cloud.datastore.computation.Computation$Terminated.toFuture(Computation.java:947)
+	at com.google.cloud.datastore.computation.Computation.toFuture(Computation.java:92)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.finish(DefaultEmulatorRulesAuthorizer.java:308)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.lambda$checkCommit$0(DefaultEmulatorRulesAuthorizer.java:123)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.withVerboseErrors(DefaultEmulatorRulesAuthorizer.java:321)
+	... 22 more
+
+May 16, 2026 2:48:03 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected HTTP/2 connection.
+May 16, 2026 2:48:03 PM com.google.cloud.datastore.emulator.impl.context.EmulatorAuthorization warnAboutSecuredJwt
+WARNING: expected an unsecured JWT, the emulator does not validate JWTs and IS NOT SECURE
+May 16, 2026 2:48:03 PM com.google.cloud.datastore.emulator.impl.context.EmulatorAuthorization warnAboutSecuredJwt
+WARNING: expected an unsecured JWT, the emulator does not validate JWTs and IS NOT SECURE
+May 16, 2026 2:48:03 PM com.google.cloud.datastore.emulator.impl.util.WrappedStreamObserver onError
+WARNING: Operation failed: 
+evaluation error at L30:24 for 'update' @ L30, Null value error. for 'update' @ L30
+com.google.cloud.datastore.core.exception.DatastoreException: 
+evaluation error at L30:24 for 'update' @ L30, Null value error. for 'update' @ L30
+	at com.google.cloud.datastore.core.exception.DatastoreException$Builder.build(DatastoreException.java:152)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.verboseError(DefaultEmulatorRulesAuthorizer.java:349)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.withVerboseErrors(DefaultEmulatorRulesAuthorizer.java:326)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.checkCommit(DefaultEmulatorRulesAuthorizer.java:114)
+	at com.google.cloud.datastore.emulator.impl.firestore.FirestoreEmulatorHelper.commitHelper(FirestoreEmulatorHelper.java:386)
+	at com.google.cloud.datastore.emulator.impl.firestore.FirestoreEmulatorHelper.internalCommit(FirestoreEmulatorHelper.java:336)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1.internalCommit(CloudFirestoreV1.java:1245)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1.write(CloudFirestoreV1.java:1232)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.handleRequest(CloudFirestoreV1WriteStream.java:222)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.write(CloudFirestoreV1WriteStream.java:144)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.onNext(CloudFirestoreV1WriteStream.java:99)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.onNext(CloudFirestoreV1WriteStream.java:27)
+	at io.grpc.stub.ServerCalls$StreamingServerCallHandler$StreamingServerCallListener.onMessage(ServerCalls.java:262)
+	at io.grpc.ForwardingServerCallListener.onMessage(ForwardingServerCallListener.java:33)
+	at io.grpc.Contexts$ContextualizedServerCallListener.onMessage(Contexts.java:76)
+	at io.grpc.ForwardingServerCallListener.onMessage(ForwardingServerCallListener.java:33)
+	at io.grpc.Contexts$ContextualizedServerCallListener.onMessage(Contexts.java:76)
+	at io.grpc.internal.ServerCallImpl$ServerStreamListenerImpl.messagesAvailableInternal(ServerCallImpl.java:334)
+	at io.grpc.internal.ServerCallImpl$ServerStreamListenerImpl.messagesAvailable(ServerCallImpl.java:319)
+	at io.grpc.internal.ServerImpl$JumpToApplicationThreadServerStreamListener$1MessagesAvailable.runInContext(ServerImpl.java:834)
+	at io.grpc.internal.ContextRunnable.run(ContextRunnable.java:37)
+	at io.grpc.internal.SerializingExecutor.run(SerializingExecutor.java:133)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1090)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:614)
+	at java.base/java.lang.Thread.run(Thread.java:1516)
+Caused by: com.google.firebase.rules.runtime.common.EvaluationException: Error: security.rules line [31], column [55]. Null value error.
+	at com.google.firebase.rules.runtime.impl.DefaultEvaluator$TransformEvaluationException.apply(DefaultEvaluator.java:275)
+	at com.google.firebase.rules.runtime.impl.DefaultEvaluator$TransformEvaluationException.apply(DefaultEvaluator.java:261)
+	at com.google.common.util.concurrent.AbstractCatchingFuture$AsyncCatchingFuture.doFallback(AbstractCatchingFuture.java:207)
+	at com.google.common.util.concurrent.AbstractCatchingFuture$AsyncCatchingFuture.doFallback(AbstractCatchingFuture.java:194)
+	at com.google.common.util.concurrent.AbstractCatchingFuture.run(AbstractCatchingFuture.java:136)
+	at com.google.common.util.concurrent.DirectExecutor.execute(DirectExecutor.java:30)
+	at com.google.common.util.concurrent.AbstractFuture.executeListener(AbstractFuture.java:1024)
+	at com.google.common.util.concurrent.AbstractFuture.addListener(AbstractFuture.java:486)
+	at com.google.common.util.concurrent.FluentFuture$TrustedFuture.addListener(FluentFuture.java:122)
+	at com.google.common.util.concurrent.AbstractCatchingFuture.createAsync(AbstractCatchingFuture.java:58)
+	at com.google.common.util.concurrent.Futures.catchingAsync(Futures.java:409)
+	at com.google.firebase.rules.runtime.impl.DefaultEvaluator.evaluate(DefaultEvaluator.java:177)
+	at com.google.cloud.datastore.emulator.impl.rules.EmulatorRuleClient$EmulatorRuleEvaluator.evaluate(EmulatorRuleClient.java:88)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer.lambda$fullEvaluate$0(AsyncTwoPhaseRulesAuthorizer.java:1001)
+	at com.google.cloud.datastore.computation.Computation.tryCatch(Computation.java:469)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer.fullEvaluate(AsyncTwoPhaseRulesAuthorizer.java:1000)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer$CommitAuthorizerImpl.lambda$checkWrite$0(AsyncTwoPhaseRulesAuthorizer.java:1237)
+	at com.google.cloud.datastore.computation.Computation.lambda$tryClose$1(Computation.java:738)
+	at com.google.cloud.datastore.computation.Computation.tryCatch(Computation.java:469)
+	at com.google.cloud.datastore.computation.Computation.tryFinally(Computation.java:705)
+	at com.google.cloud.datastore.computation.Computation.tryFinally(Computation.java:711)
+	at com.google.cloud.datastore.computation.Computation.tryClose(Computation.java:738)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer$CommitAuthorizerImpl.checkWrite(AsyncTwoPhaseRulesAuthorizer.java:1206)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.lambda$checkCommit$2(DefaultEmulatorRulesAuthorizer.java:125)
+	at com.google.cloud.datastore.computation.Computation.run(Computation.java:81)
+	at com.google.cloud.datastore.computation.Computation$Terminated.toFuture(Computation.java:947)
+	at com.google.cloud.datastore.computation.Computation.toFuture(Computation.java:92)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.finish(DefaultEmulatorRulesAuthorizer.java:308)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.lambda$checkCommit$0(DefaultEmulatorRulesAuthorizer.java:123)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.withVerboseErrors(DefaultEmulatorRulesAuthorizer.java:321)
+	... 22 more
+
+May 16, 2026 2:49:04 PM com.google.cloud.datastore.emulator.impl.context.EmulatorAuthorization warnAboutSecuredJwt
+WARNING: expected an unsecured JWT, the emulator does not validate JWTs and IS NOT SECURE
+May 16, 2026 2:49:04 PM com.google.cloud.datastore.emulator.impl.util.WrappedStreamObserver onError
+WARNING: Operation failed: 
+evaluation error at L101:24 for 'update' @ L101, Null value error. for 'update' @ L101
+com.google.cloud.datastore.core.exception.DatastoreException: 
+evaluation error at L101:24 for 'update' @ L101, Null value error. for 'update' @ L101
+	at com.google.cloud.datastore.core.exception.DatastoreException$Builder.build(DatastoreException.java:152)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.verboseError(DefaultEmulatorRulesAuthorizer.java:349)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.withVerboseErrors(DefaultEmulatorRulesAuthorizer.java:326)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.checkCommit(DefaultEmulatorRulesAuthorizer.java:114)
+	at com.google.cloud.datastore.emulator.impl.firestore.FirestoreEmulatorHelper.commitHelper(FirestoreEmulatorHelper.java:386)
+	at com.google.cloud.datastore.emulator.impl.firestore.FirestoreEmulatorHelper.internalCommit(FirestoreEmulatorHelper.java:336)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1.internalCommit(CloudFirestoreV1.java:1245)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1.write(CloudFirestoreV1.java:1232)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.handleRequest(CloudFirestoreV1WriteStream.java:222)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.write(CloudFirestoreV1WriteStream.java:144)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.onNext(CloudFirestoreV1WriteStream.java:99)
+	at com.google.cloud.datastore.emulator.impl.firestore.CloudFirestoreV1WriteStream.onNext(CloudFirestoreV1WriteStream.java:27)
+	at io.grpc.stub.ServerCalls$StreamingServerCallHandler$StreamingServerCallListener.onMessage(ServerCalls.java:262)
+	at io.grpc.ForwardingServerCallListener.onMessage(ForwardingServerCallListener.java:33)
+	at io.grpc.Contexts$ContextualizedServerCallListener.onMessage(Contexts.java:76)
+	at io.grpc.ForwardingServerCallListener.onMessage(ForwardingServerCallListener.java:33)
+	at io.grpc.Contexts$ContextualizedServerCallListener.onMessage(Contexts.java:76)
+	at io.grpc.internal.ServerCallImpl$ServerStreamListenerImpl.messagesAvailableInternal(ServerCallImpl.java:334)
+	at io.grpc.internal.ServerCallImpl$ServerStreamListenerImpl.messagesAvailable(ServerCallImpl.java:319)
+	at io.grpc.internal.ServerImpl$JumpToApplicationThreadServerStreamListener$1MessagesAvailable.runInContext(ServerImpl.java:834)
+	at io.grpc.internal.ContextRunnable.run(ContextRunnable.java:37)
+	at io.grpc.internal.SerializingExecutor.run(SerializingExecutor.java:133)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1090)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:614)
+	at java.base/java.lang.Thread.run(Thread.java:1516)
+Caused by: com.google.firebase.rules.runtime.common.EvaluationException: Error: security.rules line [90], column [32]. Null value error.
+	at com.google.firebase.rules.runtime.impl.DefaultEvaluator$TransformEvaluationException.apply(DefaultEvaluator.java:275)
+	at com.google.firebase.rules.runtime.impl.DefaultEvaluator$TransformEvaluationException.apply(DefaultEvaluator.java:261)
+	at com.google.common.util.concurrent.AbstractCatchingFuture$AsyncCatchingFuture.doFallback(AbstractCatchingFuture.java:207)
+	at com.google.common.util.concurrent.AbstractCatchingFuture$AsyncCatchingFuture.doFallback(AbstractCatchingFuture.java:194)
+	at com.google.common.util.concurrent.AbstractCatchingFuture.run(AbstractCatchingFuture.java:136)
+	at com.google.common.util.concurrent.DirectExecutor.execute(DirectExecutor.java:30)
+	at com.google.common.util.concurrent.AbstractFuture.executeListener(AbstractFuture.java:1024)
+	at com.google.common.util.concurrent.AbstractFuture.addListener(AbstractFuture.java:486)
+	at com.google.common.util.concurrent.FluentFuture$TrustedFuture.addListener(FluentFuture.java:122)
+	at com.google.common.util.concurrent.AbstractCatchingFuture.createAsync(AbstractCatchingFuture.java:58)
+	at com.google.common.util.concurrent.Futures.catchingAsync(Futures.java:409)
+	at com.google.firebase.rules.runtime.impl.DefaultEvaluator.evaluate(DefaultEvaluator.java:177)
+	at com.google.cloud.datastore.emulator.impl.rules.EmulatorRuleClient$EmulatorRuleEvaluator.evaluate(EmulatorRuleClient.java:88)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer.lambda$fullEvaluate$0(AsyncTwoPhaseRulesAuthorizer.java:1001)
+	at com.google.cloud.datastore.computation.Computation.tryCatch(Computation.java:469)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer.fullEvaluate(AsyncTwoPhaseRulesAuthorizer.java:1000)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer$CommitAuthorizerImpl.lambda$checkWrite$0(AsyncTwoPhaseRulesAuthorizer.java:1237)
+	at com.google.cloud.datastore.computation.Computation.lambda$tryClose$1(Computation.java:738)
+	at com.google.cloud.datastore.computation.Computation.tryCatch(Computation.java:469)
+	at com.google.cloud.datastore.computation.Computation.tryFinally(Computation.java:705)
+	at com.google.cloud.datastore.computation.Computation.tryFinally(Computation.java:711)
+	at com.google.cloud.datastore.computation.Computation.tryClose(Computation.java:738)
+	at com.google.cloud.datastore.core.auth.rules.AsyncTwoPhaseRulesAuthorizer$CommitAuthorizerImpl.checkWrite(AsyncTwoPhaseRulesAuthorizer.java:1206)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.lambda$checkCommit$2(DefaultEmulatorRulesAuthorizer.java:125)
+	at com.google.cloud.datastore.computation.Computation.run(Computation.java:81)
+	at com.google.cloud.datastore.computation.Computation$Terminated.toFuture(Computation.java:947)
+	at com.google.cloud.datastore.computation.Computation.toFuture(Computation.java:92)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.finish(DefaultEmulatorRulesAuthorizer.java:308)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.lambda$checkCommit$0(DefaultEmulatorRulesAuthorizer.java:123)
+	at com.google.cloud.datastore.emulator.impl.rules.DefaultEmulatorRulesAuthorizer.withVerboseErrors(DefaultEmulatorRulesAuthorizer.java:321)
+	... 22 more
+
+May 16, 2026 2:58:26 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+May 16, 2026 3:02:52 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+May 16, 2026 3:03:17 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+May 16, 2026 3:03:53 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+May 16, 2026 3:04:17 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+May 16, 2026 3:04:45 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+May 16, 2026 3:06:54 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+May 16, 2026 3:19:30 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected HTTP/2 connection.
+May 16, 2026 3:20:47 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected HTTP/2 connection.
+May 16, 2026 3:22:05 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected HTTP/2 connection.
+May 16, 2026 3:23:13 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected HTTP/2 connection.
+May 16, 2026 3:24:19 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected HTTP/2 connection.

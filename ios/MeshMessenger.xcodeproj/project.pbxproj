@@ -38,13 +38,6 @@
 		B00000000000000000000023 /* RadarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000023 /* RadarView.swift */; };
 		B00000000000000000000025 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000025 /* Assets.xcassets */; };
 		B00000000000000000000028 /* ReconnectManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000028 /* ReconnectManager.swift */; };
-		E00000000000000000000001 /* MultipeerConnectivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D00000000000000000000001 /* MultipeerConnectivity.framework */; };
-		E00000000000000000000002 /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D00000000000000000000002 /* CoreBluetooth.framework */; };
-		E00000000000000000000003 /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D00000000000000000000003 /* UserNotifications.framework */; };
-		E0000000000000000000000A /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 9D00000000000000000000BA /* FirebaseCore */; };
-		E0000000000000000000000B /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 9D00000000000000000000BB /* FirebaseAuth */; };
-		E0000000000000000000000C /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 9D00000000000000000000BC /* FirebaseFirestore */; };
-		E0000000000000000000000D /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 9D00000000000000000000BD /* FirebaseMessaging */; };
 		B0000000000000000000002A /* FirebaseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000002A /* FirebaseManager.swift */; };
 		B0000000000000000000002B /* FirebaseModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000002B /* FirebaseModels.swift */; };
 		B0000000000000000000002C /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000002C /* AuthService.swift */; };
@@ -62,13 +55,20 @@
 		B00000000000000000000038 /* GroupRadarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000038 /* GroupRadarView.swift */; };
 		B00000000000000000000039 /* MessagesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000039 /* MessagesView.swift */; };
 		B0000000000000000000003A /* DirectChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000003A /* DirectChatView.swift */; };
-		E0000000000000000000000E /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 9D00000000000000000000BE /* FirebaseStorage */; };
 		B0000000000000000000003C /* MapService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000003C /* MapService.swift */; };
 		B0000000000000000000003D /* GroupMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000003D /* GroupMapView.swift */; };
 		B0000000000000000000003E /* DMRelayService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000003E /* DMRelayService.swift */; };
 		B0000000000000000000003F /* BlockStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000003F /* BlockStore.swift */; };
 		B00000000000000000000040 /* ReportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000040 /* ReportService.swift */; };
 		B00000000000000000000041 /* StorageReference+Retry.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000041 /* StorageReference+Retry.swift */; };
+		E00000000000000000000001 /* MultipeerConnectivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D00000000000000000000001 /* MultipeerConnectivity.framework */; };
+		E00000000000000000000002 /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D00000000000000000000002 /* CoreBluetooth.framework */; };
+		E00000000000000000000003 /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D00000000000000000000003 /* UserNotifications.framework */; };
+		E0000000000000000000000A /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 9D00000000000000000000BA /* FirebaseCore */; };
+		E0000000000000000000000B /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 9D00000000000000000000BB /* FirebaseAuth */; };
+		E0000000000000000000000C /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 9D00000000000000000000BC /* FirebaseFirestore */; };
+		E0000000000000000000000D /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 9D00000000000000000000BD /* FirebaseMessaging */; };
+		E0000000000000000000000E /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 9D00000000000000000000BE /* FirebaseStorage */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -104,7 +104,6 @@
 		A00000000000000000000024 /* MeshMessenger.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MeshMessenger.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A00000000000000000000025 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A00000000000000000000026 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		A0000000000000000000003B /* MeshMessenger.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MeshMessenger.entitlements; sourceTree = "<group>"; };
 		A00000000000000000000028 /* ReconnectManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReconnectManager.swift; sourceTree = "<group>"; };
 		A0000000000000000000002A /* FirebaseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseManager.swift; sourceTree = "<group>"; };
 		A0000000000000000000002B /* FirebaseModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseModels.swift; sourceTree = "<group>"; };
@@ -123,6 +122,7 @@
 		A00000000000000000000038 /* GroupRadarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupRadarView.swift; sourceTree = "<group>"; };
 		A00000000000000000000039 /* MessagesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagesView.swift; sourceTree = "<group>"; };
 		A0000000000000000000003A /* DirectChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DirectChatView.swift; sourceTree = "<group>"; };
+		A0000000000000000000003B /* MeshMessenger.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MeshMessenger.entitlements; sourceTree = "<group>"; };
 		A0000000000000000000003C /* MapService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapService.swift; sourceTree = "<group>"; };
 		A0000000000000000000003D /* GroupMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupMapView.swift; sourceTree = "<group>"; };
 		A0000000000000000000003E /* DMRelayService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DMRelayService.swift; sourceTree = "<group>"; };
@@ -314,24 +314,6 @@
 			path = Auth;
 			sourceTree = "<group>";
 		};
-		F0000000000000000000006A /* Firebase */ = {
-			isa = PBXGroup;
-			children = (
-				A0000000000000000000002A /* FirebaseManager.swift */,
-				A0000000000000000000002B /* FirebaseModels.swift */,
-				A0000000000000000000002C /* AuthService.swift */,
-				A0000000000000000000002D /* GroupService.swift */,
-				A0000000000000000000002E /* PushService.swift */,
-				A0000000000000000000002F /* RelayService.swift */,
-				A00000000000000000000030 /* UserService.swift */,
-				A0000000000000000000003C /* MapService.swift */,
-				A0000000000000000000003E /* DMRelayService.swift */,
-				A00000000000000000000040 /* ReportService.swift */,
-				A00000000000000000000041 /* StorageReference+Retry.swift */,
-			);
-			path = Firebase;
-			sourceTree = "<group>";
-		};
 		F0000000000000000000005C /* Chat */ = {
 			isa = PBXGroup;
 			children = (
@@ -369,6 +351,24 @@
 				A00000000000000000000039 /* MessagesView.swift */,
 			);
 			path = Messages;
+			sourceTree = "<group>";
+		};
+		F0000000000000000000006A /* Firebase */ = {
+			isa = PBXGroup;
+			children = (
+				A0000000000000000000002A /* FirebaseManager.swift */,
+				A0000000000000000000002B /* FirebaseModels.swift */,
+				A0000000000000000000002C /* AuthService.swift */,
+				A0000000000000000000002D /* GroupService.swift */,
+				A0000000000000000000002E /* PushService.swift */,
+				A0000000000000000000002F /* RelayService.swift */,
+				A00000000000000000000030 /* UserService.swift */,
+				A0000000000000000000003C /* MapService.swift */,
+				A0000000000000000000003E /* DMRelayService.swift */,
+				A00000000000000000000040 /* ReportService.swift */,
+				A00000000000000000000041 /* StorageReference+Retry.swift */,
+			);
+			path = Firebase;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -423,10 +423,10 @@
 			);
 			mainGroup = F00000000000000000000040;
 			minimizedProjectReferenceProxies = 1;
-			productRefGroup = F00000000000000000000041 /* Products */;
 			packageReferences = (
 				9D00000000000000000000AA /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
+			productRefGroup = F00000000000000000000041 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -518,6 +518,7 @@
 				CODE_SIGN_ENTITLEMENTS = MeshMessenger/Resources/MeshMessenger.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QKXZCQQNDS;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MeshMessenger/Resources/Info.plist;
@@ -541,6 +542,7 @@
 				CODE_SIGN_ENTITLEMENTS = MeshMessenger/Resources/MeshMessenger.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QKXZCQQNDS;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MeshMessenger/Resources/Info.plist;
@@ -705,7 +707,7 @@
 			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = "11.0.0";
+				minimumVersion = 11.0.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

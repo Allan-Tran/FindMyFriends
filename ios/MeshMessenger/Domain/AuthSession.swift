@@ -21,11 +21,24 @@ final class AuthSession: ObservableObject {
     }
 
     var currentUid: String? { firebaseUser?.uid }
-    var currentUsername: String? { profile?.username }
+    // Falls back to the UserDefaults cache so username is available offline even if
+    // the Firestore profile fetch hasn't completed yet.
+    var currentUsername: String? { profile?.username ?? cachedUsername }
     var isSignedIn: Bool { firebaseUser != nil }
+
+    private var cachedUsername: String? {
+        guard let uid = firebaseUser?.uid else { return nil }
+        return UserDefaults.standard.string(forKey: "mesh_username_\(uid)")
+    }
 
     func observeAuthState() {
         if authStateHandle != nil { return }
+        // Seed immediately from the local Keychain so ContentView never briefly
+        // shows LoginView for a user who was already signed in.
+        if let cached = Auth.auth().currentUser {
+            firebaseUser = cached
+            isEmailVerified = cached.isEmailVerified
+        }
         authStateHandle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
             Task { @MainActor [weak self] in
                 guard let self else { return }
@@ -33,6 +46,9 @@ final class AuthSession: ObservableObject {
                 self.isEmailVerified = user?.isEmailVerified ?? false
                 if let user = user {
                     self.profile = try? await self.userService.get(uid: user.uid)
+                    if let username = self.profile?.username {
+                        UserDefaults.standard.set(username, forKey: "mesh_username_\(user.uid)")
+                    }
                 } else {
                     self.profile = nil
                 }

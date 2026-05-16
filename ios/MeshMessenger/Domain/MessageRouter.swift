@@ -87,6 +87,23 @@ final class MessageRouter: ObservableObject, MeshEngineDelegate {
         activeGroupIds = []
     }
 
+    /// Mesh-only send — never touches the Firebase relay.
+    /// Used for large payloads (e.g. inline image data) that must not be
+    /// written to Firestore. TTL=1 prevents multi-hop flooding.
+    func sendMeshOnly(content: String, to groupId: UUID) async {
+        guard let username = session.currentUsername else { return }
+        let envelope = MeshMessage(
+            groupId: groupId,
+            originPeerId: username,
+            senderUsername: username,
+            content: content,
+            ttl: 1,
+            messageType: .chat
+        )
+        persist(envelope, status: .sent)
+        meshEngine.broadcast(envelope)
+    }
+
     func sendChat(content: String, to groupId: UUID) async {
         guard let username = session.currentUsername else { return }
         let envelope = MeshMessage(

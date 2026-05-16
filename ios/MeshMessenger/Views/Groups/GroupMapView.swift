@@ -112,6 +112,7 @@ struct GroupMapView: View {
     @EnvironmentObject private var session: AuthSession
     @EnvironmentObject private var groupStore: GroupStore
     @EnvironmentObject private var blockStore: BlockStore
+    @EnvironmentObject private var syncEngine: SyncEngine
     @StateObject private var vm = MapViewModel()
 
     private var visiblePins: [FirestorePin] {
@@ -133,8 +134,9 @@ struct GroupMapView: View {
                     if isAdmin {
                         HStack {
                             Spacer()
-                            PhotosPicker(selection: $imageItem, matching: .images) {
-                                if vm.isUploadingMap {
+                            let isUploadingMap = vm.isUploadingMap
+                            PhotosPicker(selection: $imageItem, matching: .images, preferredItemEncoding: .compatible) {
+                                if isUploadingMap {
                                     Label("Uploading…", systemImage: "arrow.up.circle")
                                         .font(.caption)
                                 } else {
@@ -144,7 +146,7 @@ struct GroupMapView: View {
                             }
                             .buttonStyle(.bordered)
                             .controlSize(.small)
-                            .disabled(vm.isUploadingMap)
+                            .disabled(isUploadingMap)
                             .padding(.trailing)
                         }
                     }
@@ -166,6 +168,10 @@ struct GroupMapView: View {
         .onDisappear { vm.stop() }
         .onChange(of: imageItem) { _, item in
             guard let item else { return }
+            guard syncEngine.isOnline else {
+                vm.errorMessage = "Map images require an internet connection."
+                return
+            }
             Task { await vm.uploadMap(groupId: groupId.uuidString, item: item) }
         }
         .sheet(item: $selectedPin) { pin in
@@ -228,22 +234,23 @@ struct GroupMapView: View {
     // MARK: - Subviews
 
     private var noMapPlaceholder: some View {
-        VStack(spacing: 16) {
+        let isUploadingMap = vm.isUploadingMap
+        return VStack(spacing: 16) {
             Image(systemName: "map")
                 .font(.system(size: 60))
                 .foregroundStyle(.tertiary)
             Text("No map yet")
                 .font(.title3.bold())
             if isAdmin {
-                PhotosPicker(selection: $imageItem, matching: .images) {
-                    if vm.isUploadingMap {
+                PhotosPicker(selection: $imageItem, matching: .images, preferredItemEncoding: .compatible) {
+                    if isUploadingMap {
                         Label("Uploading…", systemImage: "arrow.up.circle")
                     } else {
                         Label("Upload Map Image", systemImage: "photo.badge.plus")
                     }
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(vm.isUploadingMap)
+                .disabled(isUploadingMap)
             } else {
                 Text("Ask the group leader to upload a map image.")
                     .font(.subheadline)
@@ -300,7 +307,7 @@ struct GroupMapView: View {
                     }
                     .buttonStyle(.borderless)
                     .font(.callout)
-                    .foregroundStyle(isBlocked ? .secondary : .red)
+                    .foregroundStyle(isBlocked ? .secondary : Color.red)
                 }
             }
             .padding()
@@ -407,7 +414,7 @@ private struct ReportSheet: View {
 
 // MARK: - UIImage downsampling
 
-private extension UIImage {
+extension UIImage {
     func downsampled(toMaxDimension maxDim: CGFloat) -> UIImage {
         let scale = min(maxDim / size.width, maxDim / size.height, 1)
         guard scale < 1 else { return self }

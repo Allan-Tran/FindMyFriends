@@ -84,6 +84,10 @@ struct GroupListView: View {
             .onChange(of: groupStore.groups.map(\.id)) { _, _ in
                 syncRouterGroups()
             }
+            .onChange(of: session.currentUsername) { _, name in
+                guard name != nil else { return }
+                syncRouterGroups()
+            }
         }
     }
 

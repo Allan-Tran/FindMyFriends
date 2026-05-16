@@ -15,11 +15,42 @@ struct MapService: Sendable {
         let ref = storage.reference().child("maps/\(groupId)/map.jpg")
         let meta = StorageMetadata()
         meta.contentType = "image/jpeg"
-        _ = try await ref.putDataAsync(data, metadata: meta)
+        try await putData(data, to: ref, metadata: meta)
         let url = try await ref.downloadURL()
         try await db.collection("groups").document(groupId)
             .updateData(["mapImageUrl": url.absoluteString])
         return url.absoluteString
+    }
+
+    func uploadChatImage(_ data: Data, groupId: String, imageId: String) async throws -> String {
+        let ref = storage.reference().child("chat/\(groupId)/\(imageId).jpg")
+        let meta = StorageMetadata()
+        meta.contentType = "image/jpeg"
+        try await putData(data, to: ref, metadata: meta)
+        return try await ref.downloadURL().absoluteString
+    }
+
+    func uploadDMImage(_ data: Data, dmId: String, imageId: String) async throws -> String {
+        let ref = storage.reference().child("dms/\(dmId)/\(imageId).jpg")
+        let meta = StorageMetadata()
+        meta.contentType = "image/jpeg"
+        try await putData(data, to: ref, metadata: meta)
+        return try await ref.downloadURL().absoluteString
+    }
+
+    // putDataAsync resolves before the server ACK in the simulator, causing
+    // the subsequent downloadURL() call to see a non-existent object.
+    // The completion-based putData fires only after the server confirms the write.
+    private func putData(_ data: Data, to ref: StorageReference, metadata: StorageMetadata) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            ref.putData(data, metadata: metadata) { _, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                } else {
+                    continuation.resume()
+                }
+            }
+        }
     }
 
     func observeMapUrl(groupId: String, onChange: @escaping (String?) -> Void) -> ListenerRegistration {

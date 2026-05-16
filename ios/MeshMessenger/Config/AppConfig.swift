@@ -1,10 +1,9 @@
 import Foundation
 
 enum AppConfig {
-    /// When true, the iOS app talks to a local Firebase emulator suite instead of the
-    /// live project. The emulator must be running (`firebase emulators:start` in
-    /// firebase/). Set the host to whatever address your dev machine has on the LAN
-    /// the iPhone/simulator can reach. Simulator on the same Mac can use "localhost".
+    /// Set to true to point Auth, Firestore, and Storage at the local emulator
+    /// suite. Run `firebase emulators:start` in firebase/ first.
+    /// Simulator uses "localhost"; a physical device needs your Mac's LAN IP.
     static let useEmulator: Bool = false
     static let emulatorHost: String = "localhost"
 

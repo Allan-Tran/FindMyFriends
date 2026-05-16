@@ -12,10 +12,11 @@ private struct OutboxItem {
 final class SyncEngine: ObservableObject {
     @Published private(set) var isOnline: Bool = false
 
-    private let monitor: NWPathMonitor
+    private var monitor: NWPathMonitor
     private let monitorQueue = DispatchQueue(label: "com.meshmessenger.sync.monitor")
     private let relayService: RelayService
     private weak var router: MessageRouter?
+    private var isMonitoring = false
 
     private var listeners: [UUID: ListenerRegistration] = [:]
     private var lastSeen: [UUID: Date] = [:]
@@ -25,13 +26,31 @@ final class SyncEngine: ObservableObject {
         self.relayService = relayService
         self.router = router
         self.monitor = NWPathMonitor()
+        beginMonitoring()
     }
 
     func attach(router: MessageRouter) {
         self.router = router
     }
 
+    // Called from router.start() — idempotent; monitor may already be running from init.
     func start() {
+        beginMonitoring()
+    }
+
+    func stop() {
+        monitor.cancel()
+        // Replace with a fresh instance so beginMonitoring() works after the next start().
+        monitor = NWPathMonitor()
+        isMonitoring = false
+        isOnline = false
+        for (_, listener) in listeners { listener.remove() }
+        listeners.removeAll()
+    }
+
+    private func beginMonitoring() {
+        guard !isMonitoring else { return }
+        isMonitoring = true
         monitor.pathUpdateHandler = { [weak self] path in
             Task { @MainActor [weak self] in
                 guard let self else { return }
@@ -43,12 +62,6 @@ final class SyncEngine: ObservableObject {
             }
         }
         monitor.start(queue: monitorQueue)
-    }
-
-    func stop() {
-        monitor.cancel()
-        for (_, listener) in listeners { listener.remove() }
-        listeners.removeAll()
     }
 
     /// Subscribe to the relay subcollection for each active group. Idempotent —

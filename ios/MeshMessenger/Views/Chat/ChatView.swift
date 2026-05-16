@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import PhotosUI
 
 struct ChatView: View {
     let groupId: UUID
@@ -13,6 +14,9 @@ struct ChatView: View {
 
     @Query private var messages: [LocalMessage]
     @State private var draft: String = ""
+    @State private var imageItem: PhotosPickerItem?
+    @State private var isUploadingImage = false
+    @State private var imageUploadError: String?
 
     private var visibleMessages: [LocalMessage] {
         messages.filter { !blockStore.isBlocked($0.senderUsername) }
@@ -63,6 +67,19 @@ struct ChatView: View {
         .onChange(of: messages.count) { _, _ in
             groupStore.markRead(for: groupId)
         }
+        .onChange(of: imageItem) { _, item in
+            guard let item else { return }
+            imageItem = nil
+            Task { await sendImage(item) }
+        }
+        .alert("Image Upload Failed", isPresented: Binding(
+            get: { imageUploadError != nil },
+            set: { if !$0 { imageUploadError = nil } }
+        )) {
+            Button("OK") { imageUploadError = nil }
+        } message: {
+            if let msg = imageUploadError { Text(msg) }
+        }
     }
 
     @ViewBuilder
@@ -96,28 +113,84 @@ struct ChatView: View {
 
     private var composer: some View {
         HStack(spacing: 8) {
+            PhotosPicker(selection: $imageItem, matching: .images, preferredItemEncoding: .compatible) {
+                Image(systemName: "photo")
+                    .font(.system(size: 22))
+            }
+            .foregroundStyle(isUploadingImage ? .secondary : Color.accentColor)
+            .buttonStyle(.borderless)
+            .disabled(isUploadingImage)
+
             TextField("Message", text: $draft, axis: .vertical)
                 .textFieldStyle(.roundedBorder)
                 .lineLimit(1...4)
-            Button {
-                let content = draft.trimmingCharacters(in: .whitespacesAndNewlines)
-                guard !content.isEmpty else { return }
-                draft = ""
-                Task { await router.sendChat(content: content, to: groupId) }
-            } label: {
-                Image(systemName: "arrow.up.circle.fill")
-                    .font(.system(size: 28))
+
+            if isUploadingImage {
+                ProgressView().frame(width: 28, height: 28)
+            } else {
+                Button {
+                    let content = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard !content.isEmpty else { return }
+                    draft = ""
+                    Task { await router.sendChat(content: content, to: groupId) }
+                } label: {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .font(.system(size: 28))
+                }
+                .disabled(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
-            .disabled(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         }
         .padding(8)
         .background(.bar)
+    }
+
+    private func sendImage(_ item: PhotosPickerItem) async {
+        guard let data = try? await item.loadTransferable(type: Data.self),
+              let img = UIImage(data: data) else {
+            imageUploadError = "Failed to read the selected image."
+            return
+        }
+
+        if syncEngine.isOnline {
+            // Online: upload to Firebase Storage, send a compact URL via mesh + relay.
+            let resized = img.downsampled(toMaxDimension: 854)
+            guard let jpeg = resized.jpegData(compressionQuality: 0.8) else { return }
+            isUploadingImage = true
+            defer { isUploadingImage = false }
+            do {
+                let url = try await MapService().uploadChatImage(
+                    jpeg, groupId: groupId.uuidString, imageId: UUID().uuidString
+                )
+                await router.sendChat(content: "img:\(url)", to: groupId)
+            } catch {
+                imageUploadError = error.localizedDescription
+            }
+        } else {
+            // Offline: encode image inline and send via Bluetooth mesh only.
+            // Smaller dimensions and quality keep the payload under ~25 KB.
+            let resized = img.downsampled(toMaxDimension: 480)
+            guard let jpeg = resized.jpegData(compressionQuality: 0.6) else { return }
+            let base64 = jpeg.base64EncodedString()
+            await router.sendMeshOnly(content: "imgdata:\(base64)", to: groupId)
+        }
     }
 }
 
 struct MessageBubble: View {
     let message: LocalMessage
     let isMine: Bool
+
+    private var imageURL: URL? {
+        guard message.content.hasPrefix("img:") else { return nil }
+        return URL(string: String(message.content.dropFirst(4)))
+    }
+
+    private var inlineImage: UIImage? {
+        guard message.content.hasPrefix("imgdata:") else { return nil }
+        let b64 = String(message.content.dropFirst(8))
+        guard let data = Data(base64Encoded: b64) else { return nil }
+        return UIImage(data: data)
+    }
 
     var body: some View {
         HStack {
@@ -128,12 +201,36 @@ struct MessageBubble: View {
                         .font(.caption.bold())
                         .foregroundStyle(.secondary)
                 }
-                Text(message.content)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(isMine ? Color.accentColor : Color.gray.opacity(0.2))
-                    .foregroundStyle(isMine ? Color.white : Color.primary)
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                if let url = imageURL {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let img):
+                            img.resizable().scaledToFit()
+                                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        case .failure:
+                            Label("Image unavailable", systemImage: "photo.badge.exclamationmark")
+                                .font(.caption).foregroundStyle(.secondary)
+                                .padding(8)
+                        case .empty:
+                            ProgressView().padding(20)
+                        @unknown default:
+                            EmptyView()
+                        }
+                    }
+                    .frame(maxWidth: 240)
+                } else if let img = inlineImage {
+                    Image(uiImage: img)
+                        .resizable().scaledToFit()
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .frame(maxWidth: 240)
+                } else {
+                    Text(message.content)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(isMine ? Color.accentColor : Color.gray.opacity(0.2))
+                        .foregroundStyle(isMine ? Color.white : Color.primary)
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
                 HStack(spacing: 4) {
                     Text(message.sentAt, style: .time)
                     if message.isLate { Text("· late").foregroundStyle(.orange) }

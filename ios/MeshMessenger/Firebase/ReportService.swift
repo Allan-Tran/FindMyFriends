@@ -23,7 +23,8 @@ struct ReportService: Sendable {
             "status": ReportStatus.pending.rawValue,
             "createdAt": Timestamp(date: Date())
         ]
-        try await db.collection("reports").document().setData(data)
+        try await db.collection("groups").document(groupId)
+            .collection("reports").document().setData(data)
     }
 
     func reportMapImage(groupId: String, reporterUid: String, reason: String) async throws {
@@ -37,12 +38,13 @@ struct ReportService: Sendable {
             "status": ReportStatus.pending.rawValue,
             "createdAt": Timestamp(date: Date())
         ]
-        try await db.collection("reports").document().setData(data)
+        try await db.collection("groups").document(groupId)
+            .collection("reports").document().setData(data)
     }
 
     func pendingReports(for groupId: String) async throws -> [FirestoreReport] {
-        let snap = try await db.collection("reports")
-            .whereField("groupId", isEqualTo: groupId)
+        let snap = try await db.collection("groups").document(groupId)
+            .collection("reports")
             .whereField("status", isEqualTo: ReportStatus.pending.rawValue)
             .order(by: "createdAt", descending: true)
             .limit(to: 50)
@@ -50,13 +52,15 @@ struct ReportService: Sendable {
         return snap.documents.compactMap { try? $0.data(as: FirestoreReport.self) }
     }
 
-    func markReviewed(reportId: String) async throws {
-        try await db.collection("reports").document(reportId)
+    func markReviewed(groupId: String, reportId: String) async throws {
+        try await db.collection("groups").document(groupId)
+            .collection("reports").document(reportId)
             .updateData(["status": ReportStatus.reviewed.rawValue])
     }
 
-    func markRemoved(reportId: String) async throws {
-        try await db.collection("reports").document(reportId)
+    func markRemoved(groupId: String, reportId: String) async throws {
+        try await db.collection("groups").document(groupId)
+            .collection("reports").document(reportId)
             .updateData(["status": ReportStatus.removed.rawValue])
     }
 }

@@ -2,6 +2,7 @@ import Foundation
 import FirebaseCore
 import FirebaseFirestore
 import FirebaseAuth
+import FirebaseStorage
 
 enum FirebaseManager {
     static func configure() {
@@ -15,6 +16,7 @@ enum FirebaseManager {
 
     private static func wireEmulator() {
         let host = AppConfig.emulatorHost
+
         let settings = Firestore.firestore().settings
         settings.host = "\(host):8080"
         settings.isSSLEnabled = false
@@ -22,5 +24,6 @@ enum FirebaseManager {
         Firestore.firestore().settings = settings
 
         Auth.auth().useEmulator(withHost: host, port: 9099)
+        Storage.storage().useEmulator(withHost: host, port: 9199)
     }
 }

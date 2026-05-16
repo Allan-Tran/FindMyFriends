@@ -28,9 +28,8 @@ service cloud.firestore {
                             'email','username','usernameLower','createdAt','fcmToken','emailVerified'
                           ]);
       allow update: if isSignedIn() && request.auth.uid == userId
-                       && request.resource.data.username == resource.data.username
-                       && request.resource.data.usernameLower == resource.data.usernameLower
-                       && request.resource.data.createdAt == resource.data.createdAt;
+                       && !request.resource.data.diff(resource.data)
+                            .affectedKeys().hasAny(['username', 'usernameLower', 'createdAt']);
       allow delete: if false;
     }
 
@@ -64,10 +63,10 @@ service cloud.firestore {
                 || request.auth.uid == resource.data.recipientUid);
       }
       function isDMParticipantCreate() {
-        let doc = get(/databases/$(database)/documents/dms/$(dmId));
-        return doc != null
-            && (request.auth.uid == doc.data.senderUid
-                || request.auth.uid == doc.data.recipientUid);
+        let dmRef = /databases/$(database)/documents/dms/$(dmId);
+        return exists(dmRef)
+            && (request.auth.uid == get(dmRef).data.senderUid
+                || request.auth.uid == get(dmRef).data.recipientUid);
       }
 
       allow read: if isSignedIn() && isDMParticipant();
@@ -129,6 +128,18 @@ service cloud.firestore {
         allow update: if false;
         allow delete: if isMember(groupId)
                          && (resource.data.uid == request.auth.uid || isAdmin(groupId));
+      }
+
+      // Reports — any member can file one; only the group admin can read or resolve.
+      match /reports/{reportId} {
+        allow read: if isAdmin(groupId);
+        allow create: if isMember(groupId)
+                         && request.resource.data.reporterUid == request.auth.uid
+                         && request.resource.data.status == 'pending';
+        allow update: if isAdmin(groupId)
+                         && request.resource.data.diff(resource.data)
+                              .affectedKeys().hasOnly(['status']);
+        allow delete: if false;
       }
     }
   }

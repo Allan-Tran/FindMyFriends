@@ -216,7 +216,7 @@ struct GroupInfoView: View {
 
                         Button("Dismiss") {
                             Task {
-                                try? await reportService.markReviewed(reportId: report.id ?? "")
+                                try? await reportService.markReviewed(groupId: report.groupId, reportId: report.id ?? "")
                                 pendingReports.removeAll { $0.id == report.id }
                             }
                         }
@@ -263,7 +263,7 @@ struct GroupInfoView: View {
         if report.reportType == "pin" {
             try? await mapService.deletePin(groupId: report.groupId, pinId: report.targetId)
         }
-        try? await reportService.markRemoved(reportId: report.id ?? "")
+        try? await reportService.markRemoved(groupId: report.groupId, reportId: report.id ?? "")
         pendingReports.removeAll { $0.id == report.id }
     }
 

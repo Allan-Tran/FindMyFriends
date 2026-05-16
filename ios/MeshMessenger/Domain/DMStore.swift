@@ -57,8 +57,8 @@ final class DMStore: ObservableObject {
     }
 
     @discardableResult
-    func openConversation(with peerUsername: String) -> LocalDMConversation {
-        guard let myUsername = session.currentUsername else { fatalError("Not signed in") }
+    func openConversation(with peerUsername: String) -> LocalDMConversation? {
+        guard let myUsername = session.currentUsername else { return nil }
         let id = Self.conversationId(userA: myUsername, userB: peerUsername)
         if let existing = conversations.first(where: { $0.id == id }) {
             router.registerDM(id)

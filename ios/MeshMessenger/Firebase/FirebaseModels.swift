@@ -71,7 +71,7 @@ enum ReportStatus: String, Codable, Sendable {
 
 struct FirestoreReport: Codable, Sendable, Identifiable {
     @DocumentID var id: String?
-    var type: String            // "pin" | "mapImage"
+    var reportType: String      // "pin" | "mapImage"
     var groupId: String
     var targetId: String        // pinId or groupId for mapImage
     var targetOwnerUid: String
@@ -79,4 +79,10 @@ struct FirestoreReport: Codable, Sendable, Identifiable {
     var reason: String
     var status: ReportStatus
     var createdAt: Timestamp
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case reportType = "type"
+        case groupId, targetId, targetOwnerUid, reporterUid, reason, status, createdAt
+    }
 }

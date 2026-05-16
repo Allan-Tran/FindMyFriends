@@ -9,9 +9,14 @@ struct ChatView: View {
     @EnvironmentObject private var meshEngine: MeshEngine
     @EnvironmentObject private var syncEngine: SyncEngine
     @EnvironmentObject private var groupStore: GroupStore
+    @EnvironmentObject private var blockStore: BlockStore
 
     @Query private var messages: [LocalMessage]
     @State private var draft: String = ""
+
+    private var visibleMessages: [LocalMessage] {
+        messages.filter { !blockStore.isBlocked($0.senderUsername) }
+    }
 
     init(groupId: UUID) {
         self.groupId = groupId
@@ -25,14 +30,20 @@ struct ChatView: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(spacing: 8) {
-                        ForEach(messages) { msg in
-                            MessageBubble(message: msg, isMine: msg.senderUsername == session.currentUsername)
+                        ForEach(visibleMessages) { msg in
+                            let isMine = msg.senderUsername == session.currentUsername
+                            MessageBubble(message: msg, isMine: isMine)
                                 .id(msg.id)
+                                .contextMenu {
+                                    if !isMine {
+                                        blockMenuButton(for: msg.senderUsername)
+                                    }
+                                }
                         }
                     }
                     .padding()
                 }
-                .onChange(of: messages.last?.id) { _, newId in
+                .onChange(of: visibleMessages.last?.id) { _, newId in
                     if let id = newId {
                         withAnimation { proxy.scrollTo(id, anchor: .bottom) }
                     }
@@ -51,6 +62,19 @@ struct ChatView: View {
         }
         .onChange(of: messages.count) { _, _ in
             groupStore.markRead(for: groupId)
+        }
+    }
+
+    @ViewBuilder
+    private func blockMenuButton(for username: String) -> some View {
+        if blockStore.isBlocked(username) {
+            Button("Unblock \(username)", systemImage: "hand.raised.slash") {
+                blockStore.unblock(username)
+            }
+        } else {
+            Button("Block \(username)", systemImage: "hand.raised", role: .destructive) {
+                blockStore.block(username)
+            }
         }
     }
 

@@ -16,6 +16,8 @@ struct GroupInfoView: View {
     @State private var codeCopied = false
     @State private var pendingReports: [FirestoreReport] = []
 
+    @EnvironmentObject private var blockStore: BlockStore
+
     private let groupService = GroupService()
     private let reportService = ReportService()
     private let mapService = MapService()
@@ -134,6 +136,7 @@ struct GroupInfoView: View {
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(members, id: \.id) { (member: FirestoreMembership) in
+                    let isSelf = member.id == session.currentUid
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             HStack(spacing: 6) {
@@ -148,13 +151,22 @@ struct GroupInfoView: View {
                                         .foregroundStyle(Color.accentColor)
                                         .clipShape(Capsule())
                                 }
+                                if !isSelf && blockStore.isBlocked(member.username) {
+                                    Text("Blocked")
+                                        .font(.caption2.bold())
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(Color.red.opacity(0.12))
+                                        .foregroundStyle(.red)
+                                        .clipShape(Capsule())
+                                }
                             }
                             Text("Joined \(member.joinedAt.dateValue(), style: .date)")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
                         Spacer()
-                        if isAdmin && member.id != session.currentUid && member.id != group?.adminId {
+                        if isAdmin && !isSelf && member.id != group?.adminId {
                             Button {
                                 memberToRemove = member
                             } label: {
@@ -162,6 +174,16 @@ struct GroupInfoView: View {
                                     .foregroundStyle(.red)
                             }
                             .buttonStyle(.borderless)
+                        }
+                    }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        if !isSelf {
+                            if blockStore.isBlocked(member.username) {
+                                Button("Unblock") { blockStore.unblock(member.username) }
+                                    .tint(.blue)
+                            } else {
+                                Button("Block", role: .destructive) { blockStore.block(member.username) }
+                            }
                         }
                     }
                 }
@@ -174,7 +196,7 @@ struct GroupInfoView: View {
         Section("Reported Content (\(pendingReports.count))") {
             ForEach(pendingReports) { report in
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(report.type == "pin" ? "Pin by \(report.targetOwnerUid)" : "Map image")
+                    Text(report.reportType == "pin" ? "Pin by \(report.targetOwnerUid)" : "Map image")
                         .font(.subheadline.bold())
                     if !report.reason.isEmpty {
                         Text(report.reason)
@@ -238,7 +260,7 @@ struct GroupInfoView: View {
     }
 
     private func removeReportedContent(_ report: FirestoreReport) async {
-        if report.type == "pin" {
+        if report.reportType == "pin" {
             try? await mapService.deletePin(groupId: report.groupId, pinId: report.targetId)
         }
         try? await reportService.markRemoved(reportId: report.id ?? "")

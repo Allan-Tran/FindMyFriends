@@ -111,7 +111,12 @@ struct GroupMapView: View {
 
     @EnvironmentObject private var session: AuthSession
     @EnvironmentObject private var groupStore: GroupStore
+    @EnvironmentObject private var blockStore: BlockStore
     @StateObject private var vm = MapViewModel()
+
+    private var visiblePins: [FirestorePin] {
+        vm.pins.filter { !blockStore.isBlocked($0.username) }
+    }
 
     @State private var selectedPin: FirestorePin?
     @State private var imageItem: PhotosPickerItem?
@@ -206,7 +211,7 @@ struct GroupMapView: View {
                                     }
                             )
 
-                        ForEach(vm.pins) { pin in
+                        ForEach(visiblePins) { pin in
                             Circle()
                                 .fill(Self.pinColor(for: pin.colorHex))
                                 .frame(width: 22, height: 22)
@@ -286,6 +291,16 @@ struct GroupMapView: View {
                     .buttonStyle(.borderless)
                     .font(.callout)
                     .foregroundStyle(.orange)
+
+                    let isBlocked = blockStore.isBlocked(pin.username)
+                    Button(isBlocked ? "Unblock \(pin.username)" : "Block \(pin.username)",
+                           role: isBlocked ? nil : .destructive) {
+                        isBlocked ? blockStore.unblock(pin.username) : blockStore.block(pin.username)
+                        selectedPin = nil
+                    }
+                    .buttonStyle(.borderless)
+                    .font(.callout)
+                    .foregroundStyle(isBlocked ? .secondary : .red)
                 }
             }
             .padding()

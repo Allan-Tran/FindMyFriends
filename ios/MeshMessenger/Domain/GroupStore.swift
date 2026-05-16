@@ -14,7 +14,7 @@ final class GroupStore: ObservableObject {
     /// Set to the group id the user is actively reading so arriving messages
     /// don't get counted as unread while the chat is on screen.
     var activeGroupId: UUID?
-
+    
     var totalUnreadCount: Int {
         groups.reduce(0) { $0 + $1.unreadCount }
     }

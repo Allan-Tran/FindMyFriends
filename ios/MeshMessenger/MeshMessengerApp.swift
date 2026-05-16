@@ -4,6 +4,7 @@ import SwiftData
 @main
 struct MeshMessengerApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    @Environment(\.scenePhase) private var scenePhase
 
     @StateObject private var session: AuthSession
     @StateObject private var meshEngine: MeshEngine
@@ -13,6 +14,7 @@ struct MeshMessengerApp: App {
     @StateObject private var groupStore: GroupStore
     @StateObject private var dmStore: DMStore
     @StateObject private var pushCenter: PushNotificationCenter
+    @StateObject private var blockStore: BlockStore
 
     init() {
         FirebaseManager.configure()
@@ -56,6 +58,8 @@ struct MeshMessengerApp: App {
         _pushCenter = StateObject(wrappedValue: push)
         AppDelegate.pushCenter = push
 
+        _blockStore = StateObject(wrappedValue: BlockStore())
+
         session.observeAuthState()
     }
 
@@ -70,6 +74,7 @@ struct MeshMessengerApp: App {
                 .environmentObject(groupStore)
                 .environmentObject(dmStore)
                 .environmentObject(pushCenter)
+                .environmentObject(blockStore)
                 .modelContainer(PersistenceController.shared.container)
                 .task(id: session.isSignedIn && session.isEmailVerified) {
                     if session.isSignedIn && session.isEmailVerified {
@@ -81,6 +86,11 @@ struct MeshMessengerApp: App {
                         dmStore.stop()
                     }
                 }
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            guard newPhase == .active else { return }
+            try? MessageRepository(context: PersistenceController.shared.mainContext)
+                .pruneOldMessages()
         }
     }
 }

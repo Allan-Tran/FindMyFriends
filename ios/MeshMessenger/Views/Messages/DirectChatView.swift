@@ -11,9 +11,14 @@ struct DirectChatView: View {
     @EnvironmentObject private var proximityEngine: ProximityEngine
     @EnvironmentObject private var syncEngine: SyncEngine
     @EnvironmentObject private var dmStore: DMStore
+    @EnvironmentObject private var blockStore: BlockStore
 
     @Query private var messages: [LocalMessage]
     @State private var draft = ""
+
+    private var visibleMessages: [LocalMessage] {
+        messages.filter { !blockStore.isBlocked($0.senderUsername) }
+    }
 
     init(dmId: UUID, peerUsername: String) {
         self.dmId = dmId
@@ -28,14 +33,14 @@ struct DirectChatView: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(spacing: 8) {
-                        ForEach(messages) { msg in
+                        ForEach(visibleMessages) { msg in
                             MessageBubble(message: msg, isMine: msg.senderUsername == session.currentUsername)
                                 .id(msg.id)
                         }
                     }
                     .padding()
                 }
-                .onChange(of: messages.last?.id) { _, newId in
+                .onChange(of: visibleMessages.last?.id) { _, newId in
                     if let id = newId {
                         withAnimation { proxy.scrollTo(id, anchor: .bottom) }
                     }

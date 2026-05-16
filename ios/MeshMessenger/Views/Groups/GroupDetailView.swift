@@ -5,6 +5,7 @@ struct GroupDetailView: View {
 
     @EnvironmentObject private var session: AuthSession
     @EnvironmentObject private var groupStore: GroupStore
+    @EnvironmentObject private var blockStore: BlockStore
     @Environment(\.dismiss) private var dismiss
 
     @State private var selectedTab = 0
@@ -42,6 +43,7 @@ struct GroupDetailView: View {
             GroupInfoView(groupId: groupId)
                 .environmentObject(session)
                 .environmentObject(groupStore)
+                .environmentObject(blockStore)
         }
         .onChange(of: groupStore.groups.map(\.id)) { _, ids in
             if !ids.contains(groupId) { dismiss() }

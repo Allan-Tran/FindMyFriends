@@ -10,7 +10,18 @@ final class GroupStore: ObservableObject {
     private let groupService: GroupService
     private let repository: GroupRepository
     private let session: AuthSession
-    weak var router: MessageRouter?
+
+    /// Set to the group id the user is actively reading so arriving messages
+    /// don't get counted as unread while the chat is on screen.
+    var activeGroupId: UUID?
+
+    var totalUnreadCount: Int {
+        groups.reduce(0) { $0 + $1.unreadCount }
+    }
+
+    weak var router: MessageRouter? {
+        didSet { setupRouterCallbacks() }
+    }
 
     private var listener: ListenerRegistration?
 
@@ -80,6 +91,14 @@ final class GroupStore: ObservableObject {
         }
     }
 
+    func removeMember(from groupId: UUID, memberUid: String) async {
+        do {
+            try await groupService.leave(groupId: groupId.uuidString, uid: memberUid)
+        } catch {
+            lastError = (error as? LocalizedError)?.errorDescription ?? "\(error)"
+        }
+    }
+
     func leave(groupId: UUID) async {
         guard let uid = session.currentUid else { return }
         do {
@@ -101,12 +120,34 @@ final class GroupStore: ObservableObject {
         }
     }
 
+    func markRead(for groupId: UUID) {
+        guard let group = groups.first(where: { $0.id == groupId }) else { return }
+        group.unreadCount = 0
+        group.lastReadAt = Date()
+        try? repository.save(group)
+        objectWillChange.send()
+    }
+
     func broadcastSyncAll() {
         for group in groups { broadcastSync(for: group) }
     }
 
     private func broadcastSync(for group: LocalGroup) {
         router?.broadcastGroupSync(groupId: group.id, memberUsernames: group.memberUsernames)
+    }
+
+    private func setupRouterCallbacks() {
+        router?.onIncomingGroupChat = { [weak self] groupId, senderUsername, sentAt in
+            guard let self,
+                  let myUsername = self.session.currentUsername,
+                  senderUsername != myUsername,
+                  let group = self.groups.first(where: { $0.id == groupId }),
+                  sentAt > group.lastReadAt,
+                  self.activeGroupId != groupId else { return }
+            group.unreadCount += 1
+            try? self.repository.save(group)
+            self.objectWillChange.send()
+        }
     }
 
     private func persist(_ dtos: [FirestoreGroup]) async {

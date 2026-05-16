@@ -1,5 +1,5 @@
 import Foundation
-import FirebaseFirestore
+@preconcurrency import FirebaseFirestore
 
 struct RelayService: Sendable {
     let db: Firestore

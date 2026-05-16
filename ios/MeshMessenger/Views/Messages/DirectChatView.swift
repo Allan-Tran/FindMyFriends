@@ -1,21 +1,24 @@
 import SwiftUI
 import SwiftData
 
-struct ChatView: View {
-    let groupId: UUID
+struct DirectChatView: View {
+    let dmId: UUID
+    let peerUsername: String
 
     @EnvironmentObject private var session: AuthSession
     @EnvironmentObject private var router: MessageRouter
     @EnvironmentObject private var meshEngine: MeshEngine
+    @EnvironmentObject private var proximityEngine: ProximityEngine
     @EnvironmentObject private var syncEngine: SyncEngine
-    @EnvironmentObject private var groupStore: GroupStore
+    @EnvironmentObject private var dmStore: DMStore
 
     @Query private var messages: [LocalMessage]
-    @State private var draft: String = ""
+    @State private var draft = ""
 
-    init(groupId: UUID) {
-        self.groupId = groupId
-        let predicate = #Predicate<LocalMessage> { $0.groupId == groupId }
+    init(dmId: UUID, peerUsername: String) {
+        self.dmId = dmId
+        self.peerUsername = peerUsername
+        let predicate = #Predicate<LocalMessage> { $0.groupId == dmId }
         _messages = Query(filter: predicate, sort: [SortDescriptor(\.sentAt, order: .forward)])
     }
 
@@ -40,24 +43,44 @@ struct ChatView: View {
             }
             composer
         }
-        .onAppear {
-            groupStore.activeGroupId = groupId
-            groupStore.markRead(for: groupId)
-        }
-        .onDisappear {
-            if groupStore.activeGroupId == groupId {
-                groupStore.activeGroupId = nil
-            }
+        .navigationTitle(peerUsername)
+        .navigationBarTitleDisplayMode(.inline)
+        .task {
+            dmStore.openConversation(with: peerUsername)
+            dmStore.activeConversationId = dmId
+            dmStore.markRead(for: dmId)
         }
         .onChange(of: messages.count) { _, _ in
-            groupStore.markRead(for: groupId)
+            dmStore.markRead(for: dmId)
+        }
+        .onDisappear {
+            if dmStore.activeConversationId == dmId {
+                dmStore.activeConversationId = nil
+            }
         }
     }
 
     private var connectivityBar: some View {
         HStack(spacing: 12) {
-            Label("\(meshEngine.connectedPeers.count) peer\(meshEngine.connectedPeers.count == 1 ? "" : "s") nearby", systemImage: "antenna.radiowaves.left.and.right")
-                .font(.caption)
+            let isNearby = meshEngine.connectedPeers.contains { $0.displayName == peerUsername }
+            let bleProx = proximityEngine.peers.first { $0.username == peerUsername }
+
+            VStack(alignment: .leading, spacing: 2) {
+                if isNearby {
+                    Label("\(peerUsername) is nearby", systemImage: "wave.3.right")
+                        .font(.caption)
+                        .foregroundStyle(.green)
+                } else {
+                    Label("\(peerUsername) is out of range", systemImage: "wave.3.right.slash")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                if let prox = bleProx {
+                    Text("~\(Int(prox.estimatedMeters))m · \(prox.band.label)")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
             Spacer()
             if syncEngine.isOnline {
                 Label("Online", systemImage: "wifi").font(.caption).foregroundStyle(.secondary)
@@ -72,14 +95,17 @@ struct ChatView: View {
 
     private var composer: some View {
         HStack(spacing: 8) {
-            TextField("Message", text: $draft, axis: .vertical)
+            TextField("Message \(peerUsername)", text: $draft, axis: .vertical)
                 .textFieldStyle(.roundedBorder)
                 .lineLimit(1...4)
             Button {
                 let content = draft.trimmingCharacters(in: .whitespacesAndNewlines)
                 guard !content.isEmpty else { return }
                 draft = ""
-                Task { await router.sendChat(content: content, to: groupId) }
+                Task {
+                    await router.sendChat(content: content, to: dmId)
+                    dmStore.markUpdated(dmId)
+                }
             } label: {
                 Image(systemName: "arrow.up.circle.fill")
                     .font(.system(size: 28))
@@ -88,36 +114,5 @@ struct ChatView: View {
         }
         .padding(8)
         .background(.bar)
-    }
-}
-
-struct MessageBubble: View {
-    let message: LocalMessage
-    let isMine: Bool
-
-    var body: some View {
-        HStack {
-            if isMine { Spacer(minLength: 40) }
-            VStack(alignment: isMine ? .trailing : .leading, spacing: 2) {
-                if !isMine {
-                    Text(message.senderUsername)
-                        .font(.caption.bold())
-                        .foregroundStyle(.secondary)
-                }
-                Text(message.content)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(isMine ? Color.accentColor : Color.gray.opacity(0.2))
-                    .foregroundStyle(isMine ? Color.white : Color.primary)
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                HStack(spacing: 4) {
-                    Text(message.sentAt, style: .time)
-                    if message.isLate { Text("· late").foregroundStyle(.orange) }
-                }
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-            }
-            if !isMine { Spacer(minLength: 40) }
-        }
     }
 }

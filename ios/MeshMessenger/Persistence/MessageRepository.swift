@@ -64,6 +64,10 @@ struct GroupRepository {
         try context.save()
     }
 
+    func save(_ group: LocalGroup) throws {
+        try context.save()
+    }
+
     func remove(_ id: UUID) throws {
         guard let g = try find(id) else { return }
         context.delete(g)

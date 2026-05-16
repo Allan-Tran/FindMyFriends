@@ -1,5 +1,5 @@
 import Foundation
-import FirebaseFirestore
+@preconcurrency import FirebaseFirestore
 
 struct UserService: Sendable {
     let db: Firestore
@@ -20,6 +20,11 @@ struct UserService: Sendable {
                 "fcmToken": FieldValue.delete()
             ])
         }
+    }
+
+    func uid(forUsername username: String) async throws -> String? {
+        let snap = try await db.collection("usernames").document(username.lowercased()).getDocument()
+        return snap.data()?["uid"] as? String
     }
 
     func searchByUsernamePrefix(_ prefix: String, limit: Int = 20) async throws -> [FirestoreUser] {

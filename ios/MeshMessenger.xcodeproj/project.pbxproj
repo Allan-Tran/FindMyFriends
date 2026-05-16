@@ -3,10 +3,11 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 60;
+	objectVersion = 63;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		9D84AD312FB2F5EF00912C74 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 9D84AD302FB2F5EF00912C74 /* GoogleService-Info.plist */; };
 		B00000000000000000000001 /* MeshMessengerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000001 /* MeshMessengerApp.swift */; };
 		B00000000000000000000002 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000002 /* AppConfig.swift */; };
 		B00000000000000000000003 /* AuthSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000003 /* AuthSession.swift */; };
@@ -18,13 +19,6 @@
 		B00000000000000000000009 /* DeliveryStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000009 /* DeliveryStatus.swift */; };
 		B0000000000000000000000A /* MeshMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000000A /* MeshMessage.swift */; };
 		B0000000000000000000000B /* ProximityBand.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000000B /* ProximityBand.swift */; };
-		B0000000000000000000000C /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000000C /* APIClient.swift */; };
-		B0000000000000000000000D /* AuthAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000000D /* AuthAPI.swift */; };
-		B0000000000000000000000E /* DTOs.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000000E /* DTOs.swift */; };
-		B0000000000000000000000F /* GroupsAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000000F /* GroupsAPI.swift */; };
-		B00000000000000000000010 /* PushAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000010 /* PushAPI.swift */; };
-		B00000000000000000000011 /* RelayAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000011 /* RelayAPI.swift */; };
-		B00000000000000000000012 /* TokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000012 /* TokenStore.swift */; };
 		B00000000000000000000013 /* KnownPeer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000013 /* KnownPeer.swift */; };
 		B00000000000000000000014 /* LocalGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000014 /* LocalGroup.swift */; };
 		B00000000000000000000015 /* LocalMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000015 /* LocalMessage.swift */; };
@@ -43,14 +37,39 @@
 		B00000000000000000000022 /* JoinGroupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000022 /* JoinGroupView.swift */; };
 		B00000000000000000000023 /* RadarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000023 /* RadarView.swift */; };
 		B00000000000000000000025 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000025 /* Assets.xcassets */; };
-		B00000000000000000000027 /* ContactHasher.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000027 /* ContactHasher.swift */; };
 		B00000000000000000000028 /* ReconnectManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000028 /* ReconnectManager.swift */; };
 		E00000000000000000000001 /* MultipeerConnectivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D00000000000000000000001 /* MultipeerConnectivity.framework */; };
 		E00000000000000000000002 /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D00000000000000000000002 /* CoreBluetooth.framework */; };
 		E00000000000000000000003 /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D00000000000000000000003 /* UserNotifications.framework */; };
+		E0000000000000000000000A /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 9D00000000000000000000BA /* FirebaseCore */; };
+		E0000000000000000000000B /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 9D00000000000000000000BB /* FirebaseAuth */; };
+		E0000000000000000000000C /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 9D00000000000000000000BC /* FirebaseFirestore */; };
+		E0000000000000000000000D /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 9D00000000000000000000BD /* FirebaseMessaging */; };
+		B0000000000000000000002A /* FirebaseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000002A /* FirebaseManager.swift */; };
+		B0000000000000000000002B /* FirebaseModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000002B /* FirebaseModels.swift */; };
+		B0000000000000000000002C /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000002C /* AuthService.swift */; };
+		B0000000000000000000002D /* GroupService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000002D /* GroupService.swift */; };
+		B0000000000000000000002E /* PushService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000002E /* PushService.swift */; };
+		B0000000000000000000002F /* RelayService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000002F /* RelayService.swift */; };
+		B00000000000000000000030 /* UserService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000030 /* UserService.swift */; };
+		B00000000000000000000031 /* SignUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000031 /* SignUpView.swift */; };
+		B00000000000000000000032 /* EmailVerificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000032 /* EmailVerificationView.swift */; };
+		B00000000000000000000033 /* PasswordResetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000033 /* PasswordResetView.swift */; };
+		B00000000000000000000034 /* GroupInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000034 /* GroupInfoView.swift */; };
+		B00000000000000000000035 /* LocalDMConversation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000035 /* LocalDMConversation.swift */; };
+		B00000000000000000000036 /* DMStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000036 /* DMStore.swift */; };
+		B00000000000000000000037 /* GroupDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000037 /* GroupDetailView.swift */; };
+		B00000000000000000000038 /* GroupRadarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000038 /* GroupRadarView.swift */; };
+		B00000000000000000000039 /* MessagesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000039 /* MessagesView.swift */; };
+		B0000000000000000000003A /* DirectChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000003A /* DirectChatView.swift */; };
+		E0000000000000000000000E /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 9D00000000000000000000BE /* FirebaseStorage */; };
+		B0000000000000000000003C /* MapService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000003C /* MapService.swift */; };
+		B0000000000000000000003D /* GroupMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000003D /* GroupMapView.swift */; };
+		B0000000000000000000003E /* DMRelayService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000003E /* DMRelayService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		9D84AD302FB2F5EF00912C74 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		A00000000000000000000001 /* MeshMessengerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshMessengerApp.swift; sourceTree = "<group>"; };
 		A00000000000000000000002 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		A00000000000000000000003 /* AuthSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthSession.swift; sourceTree = "<group>"; };
@@ -62,13 +81,6 @@
 		A00000000000000000000009 /* DeliveryStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveryStatus.swift; sourceTree = "<group>"; };
 		A0000000000000000000000A /* MeshMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshMessage.swift; sourceTree = "<group>"; };
 		A0000000000000000000000B /* ProximityBand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProximityBand.swift; sourceTree = "<group>"; };
-		A0000000000000000000000C /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
-		A0000000000000000000000D /* AuthAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthAPI.swift; sourceTree = "<group>"; };
-		A0000000000000000000000E /* DTOs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DTOs.swift; sourceTree = "<group>"; };
-		A0000000000000000000000F /* GroupsAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupsAPI.swift; sourceTree = "<group>"; };
-		A00000000000000000000010 /* PushAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushAPI.swift; sourceTree = "<group>"; };
-		A00000000000000000000011 /* RelayAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelayAPI.swift; sourceTree = "<group>"; };
-		A00000000000000000000012 /* TokenStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenStore.swift; sourceTree = "<group>"; };
 		A00000000000000000000013 /* KnownPeer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnownPeer.swift; sourceTree = "<group>"; };
 		A00000000000000000000014 /* LocalGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalGroup.swift; sourceTree = "<group>"; };
 		A00000000000000000000015 /* LocalMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalMessage.swift; sourceTree = "<group>"; };
@@ -89,8 +101,28 @@
 		A00000000000000000000024 /* MeshMessenger.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MeshMessenger.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A00000000000000000000025 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A00000000000000000000026 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		A00000000000000000000027 /* ContactHasher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactHasher.swift; sourceTree = "<group>"; };
+		A0000000000000000000003B /* MeshMessenger.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MeshMessenger.entitlements; sourceTree = "<group>"; };
 		A00000000000000000000028 /* ReconnectManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReconnectManager.swift; sourceTree = "<group>"; };
+		A0000000000000000000002A /* FirebaseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseManager.swift; sourceTree = "<group>"; };
+		A0000000000000000000002B /* FirebaseModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseModels.swift; sourceTree = "<group>"; };
+		A0000000000000000000002C /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		A0000000000000000000002D /* GroupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupService.swift; sourceTree = "<group>"; };
+		A0000000000000000000002E /* PushService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushService.swift; sourceTree = "<group>"; };
+		A0000000000000000000002F /* RelayService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelayService.swift; sourceTree = "<group>"; };
+		A00000000000000000000030 /* UserService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserService.swift; sourceTree = "<group>"; };
+		A00000000000000000000031 /* SignUpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignUpView.swift; sourceTree = "<group>"; };
+		A00000000000000000000032 /* EmailVerificationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailVerificationView.swift; sourceTree = "<group>"; };
+		A00000000000000000000033 /* PasswordResetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordResetView.swift; sourceTree = "<group>"; };
+		A00000000000000000000034 /* GroupInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupInfoView.swift; sourceTree = "<group>"; };
+		A00000000000000000000035 /* LocalDMConversation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalDMConversation.swift; sourceTree = "<group>"; };
+		A00000000000000000000036 /* DMStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DMStore.swift; sourceTree = "<group>"; };
+		A00000000000000000000037 /* GroupDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupDetailView.swift; sourceTree = "<group>"; };
+		A00000000000000000000038 /* GroupRadarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupRadarView.swift; sourceTree = "<group>"; };
+		A00000000000000000000039 /* MessagesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagesView.swift; sourceTree = "<group>"; };
+		A0000000000000000000003A /* DirectChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DirectChatView.swift; sourceTree = "<group>"; };
+		A0000000000000000000003C /* MapService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapService.swift; sourceTree = "<group>"; };
+		A0000000000000000000003D /* GroupMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupMapView.swift; sourceTree = "<group>"; };
+		A0000000000000000000003E /* DMRelayService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DMRelayService.swift; sourceTree = "<group>"; };
 		D00000000000000000000001 /* MultipeerConnectivity.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MultipeerConnectivity.framework; path = System/Library/Frameworks/MultipeerConnectivity.framework; sourceTree = SDKROOT; };
 		D00000000000000000000002 /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
 		D00000000000000000000003 /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
@@ -104,13 +136,37 @@
 				E00000000000000000000001 /* MultipeerConnectivity.framework in Frameworks */,
 				E00000000000000000000002 /* CoreBluetooth.framework in Frameworks */,
 				E00000000000000000000003 /* UserNotifications.framework in Frameworks */,
+				E0000000000000000000000A /* FirebaseCore in Frameworks */,
+				E0000000000000000000000B /* FirebaseAuth in Frameworks */,
+				E0000000000000000000000C /* FirebaseFirestore in Frameworks */,
+				E0000000000000000000000D /* FirebaseMessaging in Frameworks */,
+				E0000000000000000000000E /* FirebaseStorage in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		F00000000000000000000040 /* root */ = {
+		C00000000000000000000001 /* MeshMessenger */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000001 /* MeshMessengerApp.swift */,
+				F00000000000000000000050 /* Config */,
+				F00000000000000000000051 /* Domain */,
+				F0000000000000000000006A /* Firebase */,
+				F00000000000000000000052 /* Mesh */,
+				F00000000000000000000053 /* Models */,
+				F00000000000000000000055 /* Persistence */,
+				F00000000000000000000056 /* Proximity */,
+				F00000000000000000000057 /* Push */,
+				F00000000000000000000058 /* Resources */,
+				F00000000000000000000059 /* Sync */,
+				F0000000000000000000005A /* Views */,
+			);
+			path = MeshMessenger;
+			sourceTree = "<group>";
+		};
+		F00000000000000000000040 = {
 			isa = PBXGroup;
 			children = (
 				C00000000000000000000001 /* MeshMessenger */,
@@ -137,25 +193,6 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		C00000000000000000000001 /* MeshMessenger */ = {
-			isa = PBXGroup;
-			children = (
-				A00000000000000000000001 /* MeshMessengerApp.swift */,
-				F00000000000000000000050 /* Config */,
-				F00000000000000000000051 /* Domain */,
-				F00000000000000000000052 /* Mesh */,
-				F00000000000000000000053 /* Models */,
-				F00000000000000000000054 /* Network */,
-				F00000000000000000000055 /* Persistence */,
-				F00000000000000000000056 /* Proximity */,
-				F00000000000000000000057 /* Push */,
-				F00000000000000000000058 /* Resources */,
-				F00000000000000000000059 /* Sync */,
-				F0000000000000000000005A /* Views */,
-			);
-			path = MeshMessenger;
-			sourceTree = "<group>";
-		};
 		F00000000000000000000050 /* Config */ = {
 			isa = PBXGroup;
 			children = (
@@ -168,6 +205,7 @@
 			isa = PBXGroup;
 			children = (
 				A00000000000000000000003 /* AuthSession.swift */,
+				A00000000000000000000036 /* DMStore.swift */,
 				A00000000000000000000004 /* GroupStore.swift */,
 				A00000000000000000000005 /* MessageRouter.swift */,
 			);
@@ -195,25 +233,11 @@
 			path = Models;
 			sourceTree = "<group>";
 		};
-		F00000000000000000000054 /* Network */ = {
-			isa = PBXGroup;
-			children = (
-				A0000000000000000000000C /* APIClient.swift */,
-				A0000000000000000000000D /* AuthAPI.swift */,
-				A00000000000000000000027 /* ContactHasher.swift */,
-				A0000000000000000000000E /* DTOs.swift */,
-				A0000000000000000000000F /* GroupsAPI.swift */,
-				A00000000000000000000010 /* PushAPI.swift */,
-				A00000000000000000000011 /* RelayAPI.swift */,
-				A00000000000000000000012 /* TokenStore.swift */,
-			);
-			path = Network;
-			sourceTree = "<group>";
-		};
 		F00000000000000000000055 /* Persistence */ = {
 			isa = PBXGroup;
 			children = (
 				A00000000000000000000013 /* KnownPeer.swift */,
+				A00000000000000000000035 /* LocalDMConversation.swift */,
 				A00000000000000000000014 /* LocalGroup.swift */,
 				A00000000000000000000015 /* LocalMessage.swift */,
 				A00000000000000000000016 /* MessageRepository.swift */,
@@ -243,8 +267,10 @@
 		F00000000000000000000058 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				9D84AD302FB2F5EF00912C74 /* GoogleService-Info.plist */,
 				A00000000000000000000025 /* Assets.xcassets */,
 				A00000000000000000000026 /* Info.plist */,
+				A0000000000000000000003B /* MeshMessenger.entitlements */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -264,6 +290,7 @@
 				F0000000000000000000005B /* Auth */,
 				F0000000000000000000005C /* Chat */,
 				F0000000000000000000005D /* Groups */,
+				F0000000000000000000005F /* Messages */,
 				F0000000000000000000005E /* Radar */,
 			);
 			path = Views;
@@ -273,8 +300,27 @@
 			isa = PBXGroup;
 			children = (
 				A0000000000000000000001D /* LoginView.swift */,
+				A00000000000000000000031 /* SignUpView.swift */,
+				A00000000000000000000032 /* EmailVerificationView.swift */,
+				A00000000000000000000033 /* PasswordResetView.swift */,
 			);
 			path = Auth;
+			sourceTree = "<group>";
+		};
+		F0000000000000000000006A /* Firebase */ = {
+			isa = PBXGroup;
+			children = (
+				A0000000000000000000002A /* FirebaseManager.swift */,
+				A0000000000000000000002B /* FirebaseModels.swift */,
+				A0000000000000000000002C /* AuthService.swift */,
+				A0000000000000000000002D /* GroupService.swift */,
+				A0000000000000000000002E /* PushService.swift */,
+				A0000000000000000000002F /* RelayService.swift */,
+				A00000000000000000000030 /* UserService.swift */,
+				A0000000000000000000003C /* MapService.swift */,
+				A0000000000000000000003E /* DMRelayService.swift */,
+			);
+			path = Firebase;
 			sourceTree = "<group>";
 		};
 		F0000000000000000000005C /* Chat */ = {
@@ -289,8 +335,11 @@
 			isa = PBXGroup;
 			children = (
 				A00000000000000000000020 /* CreateGroupView.swift */,
+				A00000000000000000000037 /* GroupDetailView.swift */,
+				A00000000000000000000034 /* GroupInfoView.swift */,
 				A00000000000000000000021 /* GroupListView.swift */,
 				A00000000000000000000022 /* JoinGroupView.swift */,
+				A0000000000000000000003D /* GroupMapView.swift */,
 			);
 			path = Groups;
 			sourceTree = "<group>";
@@ -298,9 +347,19 @@
 		F0000000000000000000005E /* Radar */ = {
 			isa = PBXGroup;
 			children = (
+				A00000000000000000000038 /* GroupRadarView.swift */,
 				A00000000000000000000023 /* RadarView.swift */,
 			);
 			path = Radar;
+			sourceTree = "<group>";
+		};
+		F0000000000000000000005F /* Messages */ = {
+			isa = PBXGroup;
+			children = (
+				A0000000000000000000003A /* DirectChatView.swift */,
+				A00000000000000000000039 /* MessagesView.swift */,
+			);
+			path = Messages;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -319,6 +378,13 @@
 			dependencies = (
 			);
 			name = MeshMessenger;
+			packageProductDependencies = (
+				9D00000000000000000000BA /* FirebaseCore */,
+				9D00000000000000000000BB /* FirebaseAuth */,
+				9D00000000000000000000BC /* FirebaseFirestore */,
+				9D00000000000000000000BD /* FirebaseMessaging */,
+				9D00000000000000000000BE /* FirebaseStorage */,
+			);
 			productName = MeshMessenger;
 			productReference = A00000000000000000000024 /* MeshMessenger.app */;
 			productType = "com.apple.product-type.application";
@@ -331,7 +397,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1630;
-				LastUpgradeCheck = 1630;
+				LastUpgradeCheck = 2630;
 				TargetAttributes = {
 					F00000000000000000000010 = {
 						CreatedOnToolsVersion = 16.3;
@@ -349,6 +415,9 @@
 			mainGroup = F00000000000000000000040;
 			minimizedProjectReferenceProxies = 1;
 			productRefGroup = F00000000000000000000041 /* Products */;
+			packageReferences = (
+				9D00000000000000000000AA /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -363,6 +432,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B00000000000000000000025 /* Assets.xcassets in Resources */,
+				9D84AD312FB2F5EF00912C74 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -384,13 +454,6 @@
 				B00000000000000000000009 /* DeliveryStatus.swift in Sources */,
 				B0000000000000000000000A /* MeshMessage.swift in Sources */,
 				B0000000000000000000000B /* ProximityBand.swift in Sources */,
-				B0000000000000000000000C /* APIClient.swift in Sources */,
-				B0000000000000000000000D /* AuthAPI.swift in Sources */,
-				B0000000000000000000000E /* DTOs.swift in Sources */,
-				B0000000000000000000000F /* GroupsAPI.swift in Sources */,
-				B00000000000000000000010 /* PushAPI.swift in Sources */,
-				B00000000000000000000011 /* RelayAPI.swift in Sources */,
-				B00000000000000000000012 /* TokenStore.swift in Sources */,
 				B00000000000000000000013 /* KnownPeer.swift in Sources */,
 				B00000000000000000000014 /* LocalGroup.swift in Sources */,
 				B00000000000000000000015 /* LocalMessage.swift in Sources */,
@@ -408,8 +471,27 @@
 				B00000000000000000000021 /* GroupListView.swift in Sources */,
 				B00000000000000000000022 /* JoinGroupView.swift in Sources */,
 				B00000000000000000000023 /* RadarView.swift in Sources */,
-				B00000000000000000000027 /* ContactHasher.swift in Sources */,
 				B00000000000000000000028 /* ReconnectManager.swift in Sources */,
+				B0000000000000000000002A /* FirebaseManager.swift in Sources */,
+				B0000000000000000000002B /* FirebaseModels.swift in Sources */,
+				B0000000000000000000002C /* AuthService.swift in Sources */,
+				B0000000000000000000002D /* GroupService.swift in Sources */,
+				B0000000000000000000002E /* PushService.swift in Sources */,
+				B0000000000000000000002F /* RelayService.swift in Sources */,
+				B00000000000000000000030 /* UserService.swift in Sources */,
+				B00000000000000000000031 /* SignUpView.swift in Sources */,
+				B00000000000000000000032 /* EmailVerificationView.swift in Sources */,
+				B00000000000000000000033 /* PasswordResetView.swift in Sources */,
+				B00000000000000000000034 /* GroupInfoView.swift in Sources */,
+				B00000000000000000000035 /* LocalDMConversation.swift in Sources */,
+				B00000000000000000000036 /* DMStore.swift in Sources */,
+				B00000000000000000000037 /* GroupDetailView.swift in Sources */,
+				B00000000000000000000038 /* GroupRadarView.swift in Sources */,
+				B00000000000000000000039 /* MessagesView.swift in Sources */,
+				B0000000000000000000003A /* DirectChatView.swift in Sources */,
+				B0000000000000000000003C /* MapService.swift in Sources */,
+				B0000000000000000000003D /* GroupMapView.swift in Sources */,
+				B0000000000000000000003E /* DMRelayService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -421,14 +503,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MeshMessenger/Resources/MeshMessenger.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = "MeshMessenger/Resources/Info.plist";
+				INFOPLIST_FILE = MeshMessenger/Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.allantr.meshmessenger;
+				PRODUCT_BUNDLE_IDENTIFIER = com.allan.fmf;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -443,14 +526,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MeshMessenger/Resources/MeshMessenger.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = "MeshMessenger/Resources/Info.plist";
+				INFOPLIST_FILE = MeshMessenger/Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.allantr.meshmessenger;
+				PRODUCT_BUNDLE_IDENTIFIER = com.allan.fmf;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -484,6 +568,7 @@
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_CYCLE = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
@@ -517,6 +602,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -546,6 +632,7 @@
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_CYCLE = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
@@ -571,6 +658,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 			};
@@ -599,6 +687,44 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		9D00000000000000000000AA /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = "11.0.0";
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		9D00000000000000000000BA /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9D00000000000000000000AA /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		9D00000000000000000000BB /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9D00000000000000000000AA /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		9D00000000000000000000BC /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9D00000000000000000000AA /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		9D00000000000000000000BD /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9D00000000000000000000AA /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
+		};
+		9D00000000000000000000BE /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9D00000000000000000000AA /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = F00000000000000000000011 /* Project object */;
 }

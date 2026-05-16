@@ -1,6 +1,6 @@
 import Foundation
-import FirebaseAuth
-import FirebaseFirestore
+@preconcurrency import FirebaseAuth
+@preconcurrency import FirebaseFirestore
 
 enum AuthError: LocalizedError {
     case usernameTaken
@@ -101,6 +101,11 @@ struct AuthService: Sendable {
         guard let user = auth.currentUser else { throw AuthError.missingUser }
         try await user.reload()
         let verified = user.isEmailVerified
+        if verified {
+            // Firestore rules evaluate request.auth.token.email_verified from the JWT,
+            // not the local SDK flag. Force a new token so the claim is current.
+            _ = try? await user.getIDTokenResult(forcingRefresh: true)
+        }
         try await db.collection("users").document(user.uid).updateData([
             "emailVerified": verified
         ])

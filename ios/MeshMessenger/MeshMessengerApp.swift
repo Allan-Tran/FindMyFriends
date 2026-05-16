@@ -11,6 +11,7 @@ struct MeshMessengerApp: App {
     @StateObject private var syncEngine: SyncEngine
     @StateObject private var router: MessageRouter
     @StateObject private var groupStore: GroupStore
+    @StateObject private var dmStore: DMStore
     @StateObject private var pushCenter: PushNotificationCenter
 
     init() {
@@ -47,8 +48,11 @@ struct MeshMessengerApp: App {
         store.router = router
         _groupStore = StateObject(wrappedValue: store)
 
+        let dmStore = DMStore(context: context, router: router, session: session)
+        _dmStore = StateObject(wrappedValue: dmStore)
+
         let push = PushNotificationCenter()
-        push.attach(session: session, router: router)
+        push.attach(session: session, router: router, dmStore: dmStore)
         _pushCenter = StateObject(wrappedValue: push)
         AppDelegate.pushCenter = push
 
@@ -64,6 +68,7 @@ struct MeshMessengerApp: App {
                 .environmentObject(syncEngine)
                 .environmentObject(router)
                 .environmentObject(groupStore)
+                .environmentObject(dmStore)
                 .environmentObject(pushCenter)
                 .modelContainer(PersistenceController.shared.container)
                 .task(id: session.isSignedIn && session.isEmailVerified) {
@@ -73,6 +78,7 @@ struct MeshMessengerApp: App {
                         await pushCenter.unregister()
                         router.stop()
                         groupStore.stopObserving()
+                        dmStore.stop()
                     }
                 }
         }

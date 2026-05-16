@@ -1,13 +1,6 @@
 {
   "indexes": [
     {
-      "collectionGroup": "relay",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "storedAt", "order": "ASCENDING" }
-      ]
-    },
-    {
       "collectionGroup": "groups",
       "queryScope": "COLLECTION",
       "fields": [

@@ -22,6 +22,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     }
 
     func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable: Any]) async -> UIBackgroundFetchResult {
-        await Self.pushCenter?.handleRemoteNotification(userInfo) ?? .noData
+        Messaging.messaging().appDidReceiveMessage(userInfo)
+        return await Self.pushCenter?.handleRemoteNotification(userInfo) ?? .noData
     }
 }

@@ -10,6 +10,61 @@ const db = getFirestore();
 const messaging = getMessaging();
 
 /**
+ * When a DM relay message is written to dms/{dmId}/relay/{messageId},
+ * send a silent background push to the other participant.
+ */
+export const onDMRelayCreated = onDocumentCreated(
+  "dms/{dmId}/relay/{messageId}",
+  async (event) => {
+    const {dmId, messageId} = event.params;
+    const data = event.data?.data();
+    if (!data) return;
+
+    const senderUid: string = data.senderUid;
+
+    const dmDoc = await db.doc(`dms/${dmId}`).get();
+    const dmData = dmDoc.data();
+    if (!dmData) return;
+
+    const recipientUid: string =
+      dmData.senderUid === senderUid ? dmData.recipientUid : dmData.senderUid;
+
+    const senderUsername: string =
+      dmData.senderUid === senderUid
+        ? dmData.senderUsername
+        : dmData.recipientUsername;
+
+    const userDoc = await db.doc(`users/${recipientUid}`).get();
+    const fcmToken = userDoc.data()?.fcmToken as string | undefined;
+    if (!fcmToken) return;
+
+    try {
+      await messaging.send({
+        token: fcmToken,
+        data: {dmId, messageId, kind: "dm-relay"},
+        notification: {
+          title: senderUsername,
+          body: "New message",
+        },
+        apns: {
+          headers: {"apns-priority": "10", "apns-push-type": "alert"},
+          payload: {
+            aps: {
+              "content-available": 1,
+              alert: {title: senderUsername, body: "New message"},
+              sound: "default",
+            },
+          },
+        },
+        android: {priority: "high"},
+      });
+    } catch (e) {
+      logger.warn("FCM DM relay send failed", {recipientUid, error: e});
+    }
+  }
+);
+
+/**
  * When a relay message is created in groups/{groupId}/relay/{messageId},
  * send a silent FCM "background" push to every other group member who has
  * a registered fcmToken. The push carries groupId+messageId so the iOS
@@ -27,9 +82,14 @@ export const onRelayMessageCreated = onDocumentCreated(
 
     const senderUid: string = data.senderUid;
 
-    const membersSnap = await db
-      .collection(`groups/${groupId}/members`)
-      .get();
+    const [membersSnap, groupDoc, senderDoc] = await Promise.all([
+      db.collection(`groups/${groupId}/members`).get(),
+      db.doc(`groups/${groupId}`).get(),
+      db.doc(`users/${senderUid}`).get(),
+    ]);
+
+    const groupName: string = groupDoc.data()?.name ?? "Group";
+    const senderUsername: string = senderDoc.data()?.username ?? "Someone";
 
     const recipientUids = membersSnap.docs
       .map((m) => m.id)
@@ -48,19 +108,24 @@ export const onRelayMessageCreated = onDocumentCreated(
 
     const response = await messaging.sendEachForMulticast({
       tokens,
-      data: {
-        groupId,
-        messageId,
-        kind: "relay",
+      data: {groupId, messageId, kind: "relay"},
+      notification: {
+        title: groupName,
+        body: `New message from ${senderUsername}`,
       },
       apns: {
         headers: {
-          "apns-priority": "5",
-          "apns-push-type": "background",
+          "apns-priority": "10",
+          "apns-push-type": "alert",
         },
         payload: {
           aps: {
             "content-available": 1,
+            alert: {
+              title: groupName,
+              body: `New message from ${senderUsername}`,
+            },
+            sound: "default",
           },
         },
       },

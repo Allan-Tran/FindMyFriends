@@ -8,20 +8,27 @@ final class PersistenceController {
     let container: ModelContainer
 
     private init() {
+        let schema = Schema([LocalMessage.self, KnownPeer.self, LocalGroup.self, LocalDMConversation.self])
+        let config = ModelConfiguration(
+            schema: schema,
+            isStoredInMemoryOnly: false,
+            cloudKitDatabase: .none
+        )
+
         do {
-            let schema = Schema([
-                LocalMessage.self,
-                KnownPeer.self,
-                LocalGroup.self
-            ])
-            let configuration = ModelConfiguration(
-                schema: schema,
-                isStoredInMemoryOnly: false,
-                cloudKitDatabase: .none
-            )
-            self.container = try ModelContainer(for: schema, configurations: configuration)
+            self.container = try ModelContainer(for: schema, configurations: config)
         } catch {
-            fatalError("Failed to create ModelContainer: \(error)")
+            // Schema changed during development — wipe the store at the path
+            // SwiftData chose and recreate it from scratch.
+            let base = config.url.path(percentEncoded: false)
+            for suffix in ["", "-shm", "-wal"] {
+                try? FileManager.default.removeItem(atPath: base + suffix)
+            }
+            do {
+                self.container = try ModelContainer(for: schema, configurations: config)
+            } catch {
+                fatalError("ModelContainer failed after store reset: \(error)")
+            }
         }
     }
 

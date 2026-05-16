@@ -1,5 +1,5 @@
 import Foundation
-import FirebaseFirestore
+@preconcurrency import FirebaseFirestore
 
 struct FirestoreUser: Codable, Sendable {
     @DocumentID var id: String?
@@ -33,6 +33,17 @@ struct FirestoreGroup: Codable, Sendable, Identifiable {
     var inviteCode: String
     var createdAt: Timestamp
     var memberIds: [String]
+    var mapImageUrl: String?
+}
+
+struct FirestorePin: Codable, Sendable, Identifiable {
+    @DocumentID var id: String?
+    var x: Double
+    var y: Double
+    var username: String
+    var uid: String
+    var colorHex: String
+    var createdAt: Timestamp
 }
 
 struct FirestoreMembership: Codable, Sendable {

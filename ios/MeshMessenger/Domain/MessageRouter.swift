@@ -12,6 +12,20 @@ enum MessageSource: Sendable {
 @MainActor
 final class MessageRouter: ObservableObject, MeshEngineDelegate {
     @Published private(set) var activeGroupIds: Set<UUID> = []
+    private var realGroupIds: Set<UUID> = []
+    private var dmIds: Set<UUID> = []
+
+    /// Called when a chat message arrives for a DM UUID that wasn't pre-registered.
+    /// DMStore sets this to create the conversation and subscribe to Firestore relay.
+    var onIncomingDM: ((UUID, String) -> Void)?
+
+    /// Called instead of the group relay when a DM message is sent.
+    /// DMStore sets this to write to /dms/{dmId}/relay.
+    var onDMRelaySend: ((MeshMessage, UUID) async -> Void)?
+
+    /// Called whenever a chat message arrives for a real group (not a DM).
+    /// GroupStore sets this to increment that group's unread count.
+    var onIncomingGroupChat: ((UUID, String, Date) -> Void)?
 
     let meshEngine: MeshEngine
     let proximityEngine: ProximityEngine
@@ -39,17 +53,31 @@ final class MessageRouter: ObservableObject, MeshEngineDelegate {
     }
 
     func start(username: String, groupIds: Set<UUID>) {
-        activeGroupIds = groupIds
-        meshEngine.start(username: username, groupIds: groupIds)
+        realGroupIds = groupIds
+        let all = groupIds.union(dmIds)
+        activeGroupIds = all
+        meshEngine.start(username: username, groupIds: all)
         proximityEngine.start(localIdentity: username)
         syncEngine.start()
-        syncEngine.updateActiveGroups(groupIds)
+        syncEngine.updateActiveGroups(realGroupIds)   // DM IDs are mesh-only; never relay
     }
 
     func updateActiveGroups(_ ids: Set<UUID>) {
-        activeGroupIds = ids
-        meshEngine.updateGroups(ids)
-        syncEngine.updateActiveGroups(ids)
+        realGroupIds = ids
+        let all = ids.union(dmIds)
+        activeGroupIds = all
+        meshEngine.updateGroups(all)
+        syncEngine.updateActiveGroups(realGroupIds)   // DM IDs are mesh-only; never relay
+    }
+
+    /// Register a DM conversation UUID so the mesh layer routes it — no Firestore relay.
+    func registerDM(_ id: UUID) {
+        guard !dmIds.contains(id) else { return }
+        dmIds.insert(id)
+        let all = realGroupIds.union(dmIds)
+        activeGroupIds = all
+        if meshEngine.isRunning { meshEngine.updateGroups(all) }
+        // Intentionally NOT updating syncEngine — DMs have no Firestore group document.
     }
 
     func stop() {
@@ -70,16 +98,30 @@ final class MessageRouter: ObservableObject, MeshEngineDelegate {
         )
         persist(envelope, status: .sent)
         meshEngine.broadcast(envelope)
-        if let uid = session.currentUid {
+        if dmIds.contains(groupId) {
+            await onDMRelaySend?(envelope, groupId)
+        } else if let uid = session.currentUid {
             await syncEngine.push(envelope: envelope, senderUid: uid)
         }
     }
 
     func ingest(_ envelope: MeshMessage, source: MessageSource) {
-        guard activeGroupIds.contains(envelope.groupId) else { return }
+        if !activeGroupIds.contains(envelope.groupId) {
+            // Auto-detect an incoming DM from a contact who messaged us first.
+            guard envelope.messageType == .chat,
+                  let myUsername = session.currentUsername,
+                  !envelope.senderUsername.isEmpty,
+                  DMStore.conversationId(userA: myUsername, userB: envelope.senderUsername) == envelope.groupId
+            else { return }
+            registerDM(envelope.groupId)
+            onIncomingDM?(envelope.groupId, envelope.senderUsername)
+        }
         switch envelope.messageType {
         case .chat:
             persist(envelope, status: .delivered)
+            if !dmIds.contains(envelope.groupId) {
+                onIncomingGroupChat?(envelope.groupId, envelope.senderUsername, envelope.sentAt)
+            }
         case .peerAnnounce:
             handlePeerAnnounce(envelope)
         case .groupSync:

@@ -11,6 +11,7 @@ final class PushNotificationCenter: NSObject, ObservableObject {
     private let pushService: PushService
     private weak var session: AuthSession?
     private weak var router: MessageRouter?
+    private weak var dmStore: DMStore?
 
     init(pushService: PushService = PushService(userService: UserService())) {
         self.pushService = pushService
@@ -19,9 +20,10 @@ final class PushNotificationCenter: NSObject, ObservableObject {
         Messaging.messaging().delegate = self
     }
 
-    func attach(session: AuthSession, router: MessageRouter) {
+    func attach(session: AuthSession, router: MessageRouter, dmStore: DMStore) {
         self.session = session
         self.router = router
+        self.dmStore = dmStore
     }
 
     func requestAuthorizationAndRegister() async {
@@ -50,9 +52,16 @@ final class PushNotificationCenter: NSObject, ObservableObject {
     /// Called from AppDelegate on silent background notifications.
     /// The Cloud Function sends `{groupId, messageId, kind:"relay"}` — we fetch and persist.
     func handleRemoteNotification(_ userInfo: [AnyHashable: Any]) async -> UIBackgroundFetchResult {
-        guard let router = router else { return .noData }
-        let ids = router.activeGroupIds
-        await router.syncEngine.fetchOnce(groupIds: ids)
+        let kind = userInfo["kind"] as? String
+        if kind == "dm-relay",
+           let dmIdStr = userInfo["dmId"] as? String,
+           let dmId = UUID(uuidString: dmIdStr) {
+            await dmStore?.handleIncomingDMPush(dmId: dmId)
+        } else {
+            guard let router = router else { return .noData }
+            await router.syncEngine.fetchOnce(groupIds: router.activeGroupIds)
+            await dmStore?.fetchAll()
+        }
         return .newData
     }
 

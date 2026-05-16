@@ -1,5 +1,5 @@
 import Foundation
-import FirebaseMessaging
+@preconcurrency import FirebaseMessaging
 
 struct PushService: Sendable {
     let userService: UserService

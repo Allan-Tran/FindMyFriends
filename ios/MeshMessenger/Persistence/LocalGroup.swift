@@ -10,6 +10,8 @@ final class LocalGroup: Identifiable {
     var createdAt: Date
     var memberUsernames: [String]
     var lastSyncedAt: Date?
+    var unreadCount: Int = 0
+    var lastReadAt: Date = Date()
 
     init(
         id: UUID,
@@ -27,5 +29,7 @@ final class LocalGroup: Identifiable {
         self.createdAt = createdAt
         self.memberUsernames = memberUsernames
         self.lastSyncedAt = lastSyncedAt
+        self.unreadCount = 0
+        self.lastReadAt = Date()
     }
 }

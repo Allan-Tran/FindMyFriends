@@ -1,5 +1,5 @@
 import Foundation
-import FirebaseFirestore
+@preconcurrency import FirebaseFirestore
 
 enum GroupServiceError: LocalizedError {
     case inviteCodeNotFound

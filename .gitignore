@@ -1,0 +1,31 @@
+# Firebase credentials — never commit these
+ios/MeshMessenger/Resources/GoogleService-Info.plist
+
+# Xcode
+*.xcuserstate
+xcuserdata/
+*.xcscmblueprint
+DerivedData/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# macOS
+.DS_Store
+
+# Swift Package Manager
+.build/
+*.resolved
+
+# CocoaPods
+Pods/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+
+# Firebase emulator artifacts
+firebase/firestore-debug.log
+firebase/.firebase/

@@ -48,9 +48,11 @@ struct FirestorePin: Codable, Sendable, Identifiable {
 
 struct FirestoreMembership: Codable, Sendable {
     @DocumentID var id: String?
+    var uid: String?
     var role: FirestoreRole
     var joinedAt: Timestamp
     var username: String
+    var fcmToken: String?
 }
 
 struct FirestoreRelayMessage: Codable, Sendable {
@@ -59,4 +61,22 @@ struct FirestoreRelayMessage: Codable, Sendable {
     var senderUid: String
     var storedAt: Timestamp
     var expiresAt: Timestamp
+}
+
+enum ReportStatus: String, Codable, Sendable {
+    case pending
+    case reviewed
+    case removed
+}
+
+struct FirestoreReport: Codable, Sendable, Identifiable {
+    @DocumentID var id: String?
+    var type: String            // "pin" | "mapImage"
+    var groupId: String
+    var targetId: String        // pinId or groupId for mapImage
+    var targetOwnerUid: String
+    var reporterUid: String
+    var reason: String
+    var status: ReportStatus
+    var createdAt: Timestamp
 }

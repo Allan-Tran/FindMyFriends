@@ -30,9 +30,12 @@ struct MapService: Sendable {
     }
 
     func observePins(groupId: String, onChange: @escaping ([FirestorePin]) -> Void) -> ListenerRegistration {
-        db.collection("groups").document(groupId)
+        let cutoff = Timestamp(date: Date().addingTimeInterval(-86_400))  // last 24 h
+        return db.collection("groups").document(groupId)
             .collection("pins")
+            .whereField("createdAt", isGreaterThan: cutoff)
             .order(by: "createdAt", descending: false)
+            .limit(to: 200)
             .addSnapshotListener { snap, _ in
                 guard let snap else { onChange([]); return }
                 let pins = snap.documents.compactMap { try? $0.data(as: FirestorePin.self) }

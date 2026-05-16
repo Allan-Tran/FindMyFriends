@@ -21,14 +21,16 @@ final class ProximityEngine: NSObject, ObservableObject {
     private var lastSeen: [String: Date] = [:]
     private var usernames: [String: String] = [:]
     private var identityValueLocal: Data = Data()
+    private var localUsername: String = ""
 
     private let serviceUUID = CBUUID(string: AppConfig.proximityServiceUUID)
     private let identityCharacteristicUUID = CBUUID(string: AppConfig.proximityIdentityCharacteristicUUID)
 
-    private static let staleThreshold: TimeInterval = 15
+    private static let staleThreshold: TimeInterval = 30
 
     func start(localIdentity: String) {
         guard !isRunning else { return }
+        localUsername = localIdentity
         identityValueLocal = localIdentity.data(using: .utf8) ?? Data()
         central = CBCentralManager(delegate: self, queue: nil, options: [CBCentralManagerOptionShowPowerAlertKey: false])
         peripheral = CBPeripheralManager(delegate: self, queue: nil, options: [CBPeripheralManagerOptionShowPowerAlertKey: false])
@@ -102,9 +104,13 @@ extension ProximityEngine: CBCentralManagerDelegate {
 
     nonisolated func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String: Any], rssi RSSI: NSNumber) {
         let key = peripheral.identifier.uuidString
-        let rssi = RSSI.intValue
+        let rssiValue = RSSI.intValue
+        let discoveredName = advertisementData[CBAdvertisementDataLocalNameKey] as? String
         Task { @MainActor in
-            self.ingest(rssi: rssi, for: key)
+            if let name = discoveredName, !name.isEmpty {
+                self.attachUsername(name, to: key)
+            }
+            self.ingest(rssi: rssiValue, for: key)
         }
     }
 }
@@ -124,7 +130,7 @@ extension ProximityEngine: CBPeripheralManagerDelegate {
             peripheral.add(service)
             peripheral.startAdvertising([
                 CBAdvertisementDataServiceUUIDsKey: [self.serviceUUID],
-                CBAdvertisementDataLocalNameKey: "mesh"
+                CBAdvertisementDataLocalNameKey: self.localUsername
             ])
         }
     }

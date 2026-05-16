@@ -3,6 +3,11 @@ import Network
 import Combine
 import FirebaseFirestore
 
+private struct OutboxItem {
+    let envelope: MeshMessage
+    let senderUid: String
+}
+
 @MainActor
 final class SyncEngine: ObservableObject {
     @Published private(set) var isOnline: Bool = false
@@ -14,6 +19,7 @@ final class SyncEngine: ObservableObject {
 
     private var listeners: [UUID: ListenerRegistration] = [:]
     private var lastSeen: [UUID: Date] = [:]
+    private var outbox: [OutboxItem] = []
 
     init(relayService: RelayService = RelayService(), router: MessageRouter? = nil) {
         self.relayService = relayService
@@ -29,7 +35,11 @@ final class SyncEngine: ObservableObject {
         monitor.pathUpdateHandler = { [weak self] path in
             Task { @MainActor [weak self] in
                 guard let self else { return }
+                let wasOffline = !self.isOnline
                 self.isOnline = path.status == .satisfied
+                if self.isOnline && wasOffline {
+                    await self.flushOutbox()
+                }
             }
         }
         monitor.start(queue: monitorQueue)
@@ -54,27 +64,47 @@ final class SyncEngine: ObservableObject {
         }
     }
 
-    /// Push an outgoing envelope to Firestore. Best-effort.
+    /// Push an outgoing envelope to Firestore. Queues for retry if offline or on failure.
     func push(envelope: MeshMessage, senderUid: String) async {
+        guard isOnline else {
+            outbox.append(OutboxItem(envelope: envelope, senderUid: senderUid))
+            return
+        }
         do {
             try await relayService.post(envelope: envelope, groupId: envelope.groupId.uuidString, senderUid: senderUid)
         } catch {
-            // BLE mesh remains the primary path; ignore.
+            outbox.append(OutboxItem(envelope: envelope, senderUid: senderUid))
         }
     }
 
-    /// One-shot fetch — used from background push handlers to catch up before sleeping.
-    func fetchOnce(groupIds: Set<UUID>) async {
-        for id in groupIds { await fetchOnce(groupId: id) }
+    private func flushOutbox() async {
+        guard !outbox.isEmpty else { return }
+        let pending = outbox
+        outbox.removeAll()
+        for item in pending {
+            do {
+                try await relayService.post(envelope: item.envelope, groupId: item.envelope.groupId.uuidString, senderUid: item.senderUid)
+            } catch {
+                outbox.append(item)
+            }
+        }
     }
 
-    private func fetchOnce(groupId: UUID) async {
+    /// One-shot fetch — returns total number of new envelopes ingested across all groups.
+    func fetchOnce(groupIds: Set<UUID>) async -> Int {
+        var total = 0
+        for id in groupIds { total += await fetchOnce(groupId: id) }
+        return total
+    }
+
+    private func fetchOnce(groupId: UUID) async -> Int {
         let since = lastSeen[groupId]
         do {
             let items = try await relayService.fetchOnce(groupId: groupId.uuidString, since: since)
             for item in items { ingest(item) }
+            return items.count
         } catch {
-            // ignore
+            return 0
         }
     }
 

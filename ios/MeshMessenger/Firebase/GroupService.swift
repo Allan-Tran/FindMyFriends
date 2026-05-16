@@ -62,6 +62,7 @@ struct GroupService: Sendable {
             "memberIds": [adminUid]
         ], forDocument: groupRef)
         batch.setData([
+            "uid": adminUid,
             "role": FirestoreRole.admin.rawValue,
             "joinedAt": now,
             "username": adminUsername
@@ -98,6 +99,7 @@ struct GroupService: Sendable {
 
         let batch = db.batch()
         batch.setData([
+            "uid": uid,
             "role": FirestoreRole.member.rawValue,
             "joinedAt": Timestamp(date: Date()),
             "username": username

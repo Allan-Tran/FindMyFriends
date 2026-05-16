@@ -14,8 +14,11 @@ struct GroupInfoView: View {
     @State private var showConfirmDelete = false
     @State private var errorMessage: String?
     @State private var codeCopied = false
+    @State private var pendingReports: [FirestoreReport] = []
 
     private let groupService = GroupService()
+    private let reportService = ReportService()
+    private let mapService = MapService()
 
     private var group: LocalGroup? {
         groupStore.groups.first { $0.id == groupId }
@@ -50,6 +53,7 @@ struct GroupInfoView: View {
         List {
             inviteCodeSection(group: group)
             membersSection
+            if isAdmin && !pendingReports.isEmpty { reportsSection }
             actionsSection
         }
         .alert(
@@ -166,6 +170,46 @@ struct GroupInfoView: View {
     }
 
     @ViewBuilder
+    private var reportsSection: some View {
+        Section("Reported Content (\(pendingReports.count))") {
+            ForEach(pendingReports) { report in
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(report.type == "pin" ? "Pin by \(report.targetOwnerUid)" : "Map image")
+                        .font(.subheadline.bold())
+                    if !report.reason.isEmpty {
+                        Text(report.reason)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Text(report.createdAt.dateValue(), style: .relative)
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                    HStack(spacing: 12) {
+                        Button("Remove Content") {
+                            Task { await removeReportedContent(report) }
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .tint(.red)
+
+                        Button("Dismiss") {
+                            Task {
+                                try? await reportService.markReviewed(reportId: report.id ?? "")
+                                pendingReports.removeAll { $0.id == report.id }
+                            }
+                        }
+                        .buttonStyle(.borderless)
+                        .controlSize(.small)
+                        .foregroundStyle(.secondary)
+                    }
+                    .padding(.top, 2)
+                }
+                .padding(.vertical, 4)
+            }
+        }
+    }
+
+    @ViewBuilder
     private var actionsSection: some View {
         Section {
             if isAdmin {
@@ -188,6 +232,17 @@ struct GroupInfoView: View {
             errorMessage = error.localizedDescription
         }
         isLoading = false
+        if isAdmin {
+            pendingReports = (try? await reportService.pendingReports(for: groupId.uuidString)) ?? []
+        }
+    }
+
+    private func removeReportedContent(_ report: FirestoreReport) async {
+        if report.type == "pin" {
+            try? await mapService.deletePin(groupId: report.groupId, pinId: report.targetId)
+        }
+        try? await reportService.markRemoved(reportId: report.id ?? "")
+        pendingReports.removeAll { $0.id == report.id }
     }
 
     private func removeMember() async {

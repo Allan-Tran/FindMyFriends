@@ -1,7 +1,13 @@
 import {initializeApp} from "firebase-admin/app";
-import {getFirestore, FieldValue} from "firebase-admin/firestore";
+import {
+  getFirestore,
+  FieldValue,
+  Timestamp,
+  DocumentReference,
+} from "firebase-admin/firestore";
 import {getMessaging} from "firebase-admin/messaging";
-import {onDocumentCreated} from "firebase-functions/v2/firestore";
+import {onDocumentCreated, onDocumentWritten} from "firebase-functions/v2/firestore";
+import {onSchedule} from "firebase-functions/v2/scheduler";
 import {logger} from "firebase-functions/v2";
 
 initializeApp();
@@ -66,9 +72,8 @@ export const onDMRelayCreated = onDocumentCreated(
 
 /**
  * When a relay message is created in groups/{groupId}/relay/{messageId},
- * send a silent FCM "background" push to every other group member who has
- * a registered fcmToken. The push carries groupId+messageId so the iOS
- * client can fetch the message from Firestore on wake.
+ * read fcmToken from each member document (already fetched) instead of
+ * making a separate read per user — eliminates N extra document reads.
  */
 export const onRelayMessageCreated = onDocumentCreated(
   "groups/{groupId}/relay/{messageId}",
@@ -82,27 +87,30 @@ export const onRelayMessageCreated = onDocumentCreated(
 
     const senderUid: string = data.senderUid;
 
-    const [membersSnap, groupDoc, senderDoc] = await Promise.all([
+    // Fetch members + group name in parallel. fcmToken is now stored on
+    // each member document, so no additional user-doc reads are needed.
+    const [membersSnap, groupDoc] = await Promise.all([
       db.collection(`groups/${groupId}/members`).get(),
       db.doc(`groups/${groupId}`).get(),
-      db.doc(`users/${senderUid}`).get(),
     ]);
 
     const groupName: string = groupDoc.data()?.name ?? "Group";
-    const senderUsername: string = senderDoc.data()?.username ?? "Someone";
 
-    const recipientUids = membersSnap.docs
-      .map((m) => m.id)
-      .filter((uid) => uid !== senderUid);
+    // Extract sender username from their member doc (already in the snap).
+    const senderMemberData = membersSnap.docs.find((d) => d.id === senderUid)?.data();
+    const senderUsername: string = senderMemberData?.username ?? "Someone";
 
-    if (recipientUids.length === 0) return;
+    const tokens: string[] = [];
+    const tokenToDocRef = new Map<string, DocumentReference>();
 
-    const userDocs = await db.getAll(
-      ...recipientUids.map((uid) => db.doc(`users/${uid}`))
-    );
-    const tokens = userDocs
-      .map((d) => d.data()?.fcmToken as string | undefined)
-      .filter((t): t is string => typeof t === "string" && t.length > 0);
+    for (const doc of membersSnap.docs) {
+      if (doc.id === senderUid) continue;
+      const token = doc.data()?.fcmToken as string | undefined;
+      if (typeof token === "string" && token.length > 0) {
+        tokens.push(token);
+        tokenToDocRef.set(token, doc.ref);
+      }
+    }
 
     if (tokens.length === 0) return;
 
@@ -129,13 +137,11 @@ export const onRelayMessageCreated = onDocumentCreated(
           },
         },
       },
-      android: {
-        priority: "high",
-      },
+      android: {priority: "high"},
     });
 
-    // Clean up tokens that the FCM server told us are no longer valid.
-    const stale: string[] = [];
+    // Remove stale tokens from member docs directly.
+    const staleDeletes: Promise<unknown>[] = [];
     response.responses.forEach((r, i) => {
       if (r.success) return;
       const code = r.error?.code ?? "";
@@ -143,20 +149,109 @@ export const onRelayMessageCreated = onDocumentCreated(
         code === "messaging/registration-token-not-registered" ||
         code === "messaging/invalid-registration-token"
       ) {
-        stale.push(tokens[i]);
+        const ref = tokenToDocRef.get(tokens[i]);
+        if (ref) {
+          staleDeletes.push(
+            ref.update({fcmToken: FieldValue.delete()}).catch(() => undefined)
+          );
+        }
       } else {
         logger.warn("FCM send failed", {token: tokens[i], code});
       }
     });
-
-    if (stale.length > 0) {
-      await Promise.all(
-        userDocs
-          .filter((d) => stale.includes(d.data()?.fcmToken))
-          .map((d) =>
-            d.ref.update({fcmToken: FieldValue.delete()}).catch(() => undefined)
-          )
-      );
-    }
+    if (staleDeletes.length > 0) await Promise.all(staleDeletes);
   }
 );
+
+/**
+ * When a user's FCM token changes, propagate it to every group member doc
+ * so onRelayMessageCreated can read tokens without extra user-doc reads.
+ */
+export const onUserFcmTokenWritten = onDocumentWritten(
+  "users/{uid}",
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (before?.fcmToken === after?.fcmToken) return;
+
+    const uid = event.params.uid;
+    const newToken: string | null = (after?.fcmToken as string | undefined) ?? null;
+
+    // Find all member docs for this user via a collection-group query.
+    // Member docs have a "uid" field added when the user joins.
+    const memberSnaps = await db
+      .collectionGroup("members")
+      .where("uid", "==", uid)
+      .get();
+
+    if (memberSnaps.empty) return;
+
+    const updates = memberSnaps.docs.map((doc) =>
+      newToken
+        ? doc.ref.update({fcmToken: newToken}).catch(() => undefined)
+        : doc.ref.update({fcmToken: FieldValue.delete()}).catch(() => undefined)
+    );
+    await Promise.all(updates);
+  }
+);
+
+/**
+ * Daily cleanup of expired relay messages. Enforces the expiresAt TTL
+ * that is written on every relay document at creation time.
+ */
+export const pruneExpiredRelayMessages = onSchedule(
+  {schedule: "every 24 hours", timeoutSeconds: 540},
+  async () => {
+    const now = Timestamp.now();
+    let deletedTotal = 0;
+
+    // Group relay messages
+    const groupsSnap = await db.collection("groups").select().get();
+    for (const group of groupsSnap.docs) {
+      const expired = await db
+        .collection(`groups/${group.id}/relay`)
+        .where("expiresAt", "<", now)
+        .select()  // fetch only doc refs, no field data
+        .get();
+      if (expired.empty) continue;
+
+      // Commit in batches of 500 (Firestore limit).
+      const chunks = chunkArray(expired.docs, 500);
+      for (const chunk of chunks) {
+        const batch = db.batch();
+        for (const doc of chunk) batch.delete(doc.ref);
+        await batch.commit();
+      }
+      deletedTotal += expired.size;
+    }
+
+    // DM relay messages
+    const dmsSnap = await db.collection("dms").select().get();
+    for (const dm of dmsSnap.docs) {
+      const expired = await db
+        .collection(`dms/${dm.id}/relay`)
+        .where("expiresAt", "<", now)
+        .select()
+        .get();
+      if (expired.empty) continue;
+
+      const chunks = chunkArray(expired.docs, 500);
+      for (const chunk of chunks) {
+        const batch = db.batch();
+        for (const doc of chunk) batch.delete(doc.ref);
+        await batch.commit();
+      }
+      deletedTotal += expired.size;
+    }
+
+    logger.info(`pruneExpiredRelayMessages: deleted ${deletedTotal} expired relay docs`);
+  }
+);
+
+function chunkArray<T>(arr: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size));
+  }
+  return chunks;
+}

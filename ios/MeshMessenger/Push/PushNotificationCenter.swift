@@ -56,13 +56,14 @@ final class PushNotificationCenter: NSObject, ObservableObject {
         if kind == "dm-relay",
            let dmIdStr = userInfo["dmId"] as? String,
            let dmId = UUID(uuidString: dmIdStr) {
-            await dmStore?.handleIncomingDMPush(dmId: dmId)
-        } else {
-            guard let router = router else { return .noData }
-            await router.syncEngine.fetchOnce(groupIds: router.activeGroupIds)
-            await dmStore?.fetchAll()
+            guard let store = dmStore else { return .noData }
+            await store.handleIncomingDMPush(dmId: dmId)
+            return .newData
         }
-        return .newData
+        guard let router = router else { return .noData }
+        let fetched = await router.syncEngine.fetchOnce(groupIds: router.activeGroupIds)
+        await dmStore?.fetchAll()
+        return fetched > 0 ? .newData : .noData
     }
 
     func unregister() async {

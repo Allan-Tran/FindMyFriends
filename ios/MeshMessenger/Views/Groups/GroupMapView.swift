@@ -11,6 +11,7 @@ private final class MapViewModel: ObservableObject {
     @Published var uiImage: UIImage?
     @Published var isUploadingMap = false
     @Published var errorMessage: String?
+    @Published var reportPinTarget: FirestorePin?
 
     private var pinsListener: ListenerRegistration?
     private var mapUrlListener: ListenerRegistration?
@@ -58,9 +59,13 @@ private final class MapViewModel: ObservableObject {
 
     func uploadMap(groupId: String, item: PhotosPickerItem) async {
         guard let data = try? await item.loadTransferable(type: Data.self),
-              let img = UIImage(data: data),
-              let jpeg = img.jpegData(compressionQuality: 0.8) else {
+              let img = UIImage(data: data) else {
             errorMessage = "Failed to process image."
+            return
+        }
+        let downsampled = img.downsampled(toMaxDimension: 1920)
+        guard let jpeg = downsampled.jpegData(compressionQuality: 0.8) else {
+            errorMessage = "Failed to encode image."
             return
         }
         isUploadingMap = true
@@ -72,9 +77,28 @@ private final class MapViewModel: ObservableObject {
         isUploadingMap = false
     }
 
+    // Keyed by URL string so a new upload (new token) naturally busts the cache.
+    private static let imageCache = NSCache<NSString, UIImage>()
+    private static let imageSession: URLSession = {
+        let cfg = URLSessionConfiguration.default
+        cfg.urlCache = URLCache(
+            memoryCapacity: 20 * 1024 * 1024,
+            diskCapacity: 100 * 1024 * 1024,
+            diskPath: "MapImageCache"
+        )
+        cfg.requestCachePolicy = .returnCacheDataElseLoad
+        return URLSession(configuration: cfg)
+    }()
+
     private func loadImage(from url: URL) async {
-        if let (data, _) = try? await URLSession.shared.data(from: url),
+        let key = url.absoluteString as NSString
+        if let cached = Self.imageCache.object(forKey: key) {
+            uiImage = cached
+            return
+        }
+        if let (data, _) = try? await Self.imageSession.data(from: url),
            let img = UIImage(data: data) {
+            Self.imageCache.setObject(img, forKey: key)
             uiImage = img
         }
     }
@@ -255,6 +279,14 @@ struct GroupMapView: View {
                     }
                     .buttonStyle(.bordered)
                 }
+                if pin.uid != session.currentUid {
+                    Button("Report Pin", role: .destructive) {
+                        vm.reportPinTarget = pin
+                    }
+                    .buttonStyle(.borderless)
+                    .font(.callout)
+                    .foregroundStyle(.orange)
+                }
             }
             .padding()
             .navigationTitle("Pin Info")
@@ -266,6 +298,11 @@ struct GroupMapView: View {
             }
         }
         .presentationDetents([.medium])
+        .sheet(item: $vm.reportPinTarget) { pin in
+            ReportSheet(groupId: groupId.uuidString, pin: pin, reporterUid: session.currentUid ?? "") {
+                selectedPin = nil
+            }
+        }
     }
 
     // MARK: - Color helpers
@@ -293,5 +330,74 @@ struct GroupMapView: View {
         case "#5AC8FA": return Color(red: 0.35, green: 0.78, blue: 0.98)
         default:        return .red
         }
+    }
+}
+
+// MARK: - Report sheet
+
+private struct ReportSheet: View {
+    let groupId: String
+    let pin: FirestorePin
+    let reporterUid: String
+    let onDone: () -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var reason: String = ""
+    @State private var isSending = false
+    @State private var sent = false
+
+    private let service = ReportService()
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Why are you reporting this pin?") {
+                    TextField("Describe the issue…", text: $reason, axis: .vertical)
+                        .lineLimit(3...6)
+                }
+                Section {
+                    Button("Submit Report") {
+                        Task {
+                            isSending = true
+                            try? await service.reportPin(
+                                groupId: groupId,
+                                pinId: pin.id ?? "",
+                                pinOwnerUid: pin.uid,
+                                reporterUid: reporterUid,
+                                reason: reason.trimmingCharacters(in: .whitespacesAndNewlines)
+                            )
+                            isSending = false
+                            sent = true
+                        }
+                    }
+                    .disabled(reason.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSending || sent)
+                }
+            }
+            .navigationTitle("Report Pin")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+            .alert("Report Submitted", isPresented: $sent) {
+                Button("OK") { dismiss(); onDone() }
+            } message: {
+                Text("Thank you. The group admin will review this within 24 hours.")
+            }
+        }
+        .presentationDetents([.medium])
+    }
+}
+
+// MARK: - UIImage downsampling
+
+private extension UIImage {
+    func downsampled(toMaxDimension maxDim: CGFloat) -> UIImage {
+        let scale = min(maxDim / size.width, maxDim / size.height, 1)
+        guard scale < 1 else { return self }
+        let newSize = CGSize(width: (size.width * scale).rounded(), height: (size.height * scale).rounded())
+        let renderer = UIGraphicsImageRenderer(size: newSize)
+        return renderer.image { _ in draw(in: CGRect(origin: .zero, size: newSize)) }
     }
 }

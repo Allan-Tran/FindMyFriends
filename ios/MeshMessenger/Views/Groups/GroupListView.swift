@@ -9,6 +9,8 @@ struct GroupListView: View {
     @State private var showCreate = false
     @State private var showJoin = false
 
+    @Environment(\.modelContext) private var modelContext
+
     var body: some View {
         NavigationStack {
             List {
@@ -81,6 +83,7 @@ struct GroupListView: View {
                 groupStore.startObserving()
                 dmStore.load()
                 syncRouterGroups()
+                try? MessageRepository(context: modelContext).pruneOldMessages()
             }
             .onChange(of: groupStore.groups.map(\.id)) { _, _ in
                 syncRouterGroups()

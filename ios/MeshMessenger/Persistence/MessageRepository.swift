@@ -34,6 +34,17 @@ struct MessageRepository {
         descriptor.fetchLimit = 1
         return try context.fetch(descriptor).first?.receivedAt
     }
+
+    /// Delete messages older than `age`. Called on app launch to keep the SQLite file bounded.
+    func pruneOldMessages(olderThan age: TimeInterval = 86_400) throws {
+        let cutoff = Date().addingTimeInterval(-age)
+        let descriptor = FetchDescriptor<LocalMessage>(
+            predicate: #Predicate { $0.sentAt < cutoff }
+        )
+        let stale = try context.fetch(descriptor)
+        for msg in stale { context.delete(msg) }
+        if !stale.isEmpty { try context.save() }
+    }
 }
 
 @MainActor

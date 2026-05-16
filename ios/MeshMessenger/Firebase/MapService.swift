@@ -16,7 +16,7 @@ struct MapService: Sendable {
         let meta = StorageMetadata()
         meta.contentType = "image/jpeg"
         try await putData(data, to: ref, metadata: meta)
-        let url = try await ref.downloadURL()
+        let url = try await ref.downloadURLWithRetry()
         try await db.collection("groups").document(groupId)
             .updateData(["mapImageUrl": url.absoluteString])
         return url.absoluteString
@@ -27,7 +27,7 @@ struct MapService: Sendable {
         let meta = StorageMetadata()
         meta.contentType = "image/jpeg"
         try await putData(data, to: ref, metadata: meta)
-        return try await ref.downloadURL().absoluteString
+        return try await ref.downloadURLWithRetry().absoluteString
     }
 
     func uploadDMImage(_ data: Data, dmId: String, imageId: String) async throws -> String {
@@ -35,12 +35,9 @@ struct MapService: Sendable {
         let meta = StorageMetadata()
         meta.contentType = "image/jpeg"
         try await putData(data, to: ref, metadata: meta)
-        return try await ref.downloadURL().absoluteString
+        return try await ref.downloadURLWithRetry().absoluteString
     }
 
-    // putDataAsync resolves before the server ACK in the simulator, causing
-    // the subsequent downloadURL() call to see a non-existent object.
-    // The completion-based putData fires only after the server confirms the write.
     private func putData(_ data: Data, to ref: StorageReference, metadata: StorageMetadata) async throws {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             ref.putData(data, metadata: metadata) { _, error in

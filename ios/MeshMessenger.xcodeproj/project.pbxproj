@@ -68,6 +68,7 @@
 		B0000000000000000000003E /* DMRelayService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000003E /* DMRelayService.swift */; };
 		B0000000000000000000003F /* BlockStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000003F /* BlockStore.swift */; };
 		B00000000000000000000040 /* ReportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000040 /* ReportService.swift */; };
+		B00000000000000000000041 /* StorageReference+Retry.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000041 /* StorageReference+Retry.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -127,6 +128,7 @@
 		A0000000000000000000003E /* DMRelayService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DMRelayService.swift; sourceTree = "<group>"; };
 		A0000000000000000000003F /* BlockStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockStore.swift; sourceTree = "<group>"; };
 		A00000000000000000000040 /* ReportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportService.swift; sourceTree = "<group>"; };
+		A00000000000000000000041 /* StorageReference+Retry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "StorageReference+Retry.swift"; sourceTree = "<group>"; };
 		D00000000000000000000001 /* MultipeerConnectivity.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MultipeerConnectivity.framework; path = System/Library/Frameworks/MultipeerConnectivity.framework; sourceTree = SDKROOT; };
 		D00000000000000000000002 /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
 		D00000000000000000000003 /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
@@ -325,6 +327,7 @@
 				A0000000000000000000003C /* MapService.swift */,
 				A0000000000000000000003E /* DMRelayService.swift */,
 				A00000000000000000000040 /* ReportService.swift */,
+				A00000000000000000000041 /* StorageReference+Retry.swift */,
 			);
 			path = Firebase;
 			sourceTree = "<group>";
@@ -500,6 +503,7 @@
 				B0000000000000000000003E /* DMRelayService.swift in Sources */,
 				B0000000000000000000003F /* BlockStore.swift in Sources */,
 				B00000000000000000000040 /* ReportService.swift in Sources */,
+				B00000000000000000000041 /* StorageReference+Retry.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

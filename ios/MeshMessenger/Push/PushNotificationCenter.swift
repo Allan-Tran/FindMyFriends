@@ -52,6 +52,8 @@ final class PushNotificationCenter: NSObject, ObservableObject {
     /// Called from AppDelegate on silent background notifications.
     /// The Cloud Function sends `{groupId, messageId, kind:"relay"}` — we fetch and persist.
     func handleRemoteNotification(_ userInfo: [AnyHashable: Any]) async -> UIBackgroundFetchResult {
+        LocalNotificationHelper.suppressRelayNotifications = true
+            defer { LocalNotificationHelper.suppressRelayNotifications = false }
         let kind = userInfo["kind"] as? String
         if kind == "dm-relay",
            let dmIdStr = userInfo["dmId"] as? String,

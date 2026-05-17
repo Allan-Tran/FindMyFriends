@@ -52,7 +52,7 @@ final class ProximityEngine: NSObject, ObservableObject {
     private var identityValueLocal: Data = Data()
     private var localUsername: String = ""
     private var connectedPeripherals: [String: CBPeripheral] = [:]
-    private var pendingConnections: Set<String> = []
+    private var pendingConnections: [String: CBPeripheral] = [:]
     private var rssiTimerTask: Task<Void, Never>?
 
     private let serviceUUID = CBUUID(string: AppConfig.proximityServiceUUID)
@@ -251,7 +251,7 @@ extension ProximityEngine: CBCentralManagerDelegate {
                     if p.services == nil { p.discoverServices([self.serviceUUID]) }
                 case .connecting:
                     // OS is still trying to connect — just track it; connect() not needed.
-                    self.pendingConnections.insert(key)
+                    self.pendingConnections[key] = p
                 default:
                     // .disconnected / .disconnecting: the OS dropped the request.
                     // Don't add to pendingConnections — let didDiscover handle a fresh connect.
@@ -279,7 +279,6 @@ extension ProximityEngine: CBCentralManagerDelegate {
         let key = peripheral.identifier.uuidString
         let rssiValue = RSSI.intValue
         let name = advertisementData[CBAdvertisementDataLocalNameKey] as? String ?? "?"
-        bleLog.info("[discover] 📡 found \(key, privacy: .public) rssi=\(rssiValue, privacy: .public) name=\(name, privacy: .public)")
 
         Task { @MainActor in
             self.ingest(rssi: rssiValue, for: key)
@@ -288,10 +287,11 @@ extension ProximityEngine: CBCentralManagerDelegate {
             // connectedPeripherals is populated in didConnect, not here, to
             // prevent commands being sent to a peripheral in .connecting state.
             let alreadyConnected = self.connectedPeripherals[key] != nil
-            let alreadyPending   = self.pendingConnections.contains(key)
+            let alreadyPending   = self.pendingConnections[key] != nil
+
             if !alreadyConnected && !alreadyPending {
                 peripheral.delegate = self
-                self.pendingConnections.insert(key)
+                self.pendingConnections[key] = peripheral // RETAINS THE OBJECT
                 bleLog.info("[discover] 🔗 initiating connect to \(key, privacy: .public)")
                 self.central?.connect(peripheral, options: nil)
             }
@@ -302,7 +302,7 @@ extension ProximityEngine: CBCentralManagerDelegate {
         let key = peripheral.identifier.uuidString
         bleLog.info("[connect] ✅ connected to \(key, privacy: .public) — discovering services")
         Task { @MainActor in
-            self.pendingConnections.remove(key)
+            self.pendingConnections.removeValue(forKey: key)
             self.connectedPeripherals[key] = peripheral
             peripheral.discoverServices([self.serviceUUID])
         }
@@ -315,7 +315,7 @@ extension ProximityEngine: CBCentralManagerDelegate {
         bleLog.error("[connect] ❌ FAILED to connect \(key, privacy: .public) — code=\(code, privacy: .public) \(desc, privacy: .public)")
         Task { @MainActor in
             // Hard failure — clear both tracking sets so didDiscover can retry on next advertisement.
-            self.pendingConnections.remove(key)
+            self.pendingConnections.removeValue(forKey: key)
             self.connectedPeripherals.removeValue(forKey: key)
         }
     }
@@ -333,7 +333,7 @@ extension ProximityEngine: CBCentralManagerDelegate {
             self.connectedPeripherals.removeValue(forKey: key)
             // Don't reconnect if the engine was stopped while this task was queued.
             guard self.isRunning else { return }
-            self.pendingConnections.insert(key)
+            self.pendingConnections[key] = peripheral
             let options: [String: Any] = [
                 CBConnectPeripheralOptionNotifyOnConnectionKey: true,
                 CBConnectPeripheralOptionNotifyOnDisconnectionKey: true

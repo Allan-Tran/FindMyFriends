@@ -17,6 +17,7 @@ final class MessageRouter: ObservableObject, MeshEngineDelegate {
     private var realGroupIds: Set<UUID> = []
     private var dmIds: Set<UUID> = []
     private var backgroundTaskId: UIBackgroundTaskIdentifier = .invalid
+    private var processedMessageIds: Set<UUID> = []
 
     /// Called when a chat message arrives for a DM UUID that wasn't pre-registered.
     /// DMStore sets this to create the conversation and subscribe to Firestore relay.
@@ -150,6 +151,9 @@ final class MessageRouter: ObservableObject, MeshEngineDelegate {
     }
 
     func ingest(_ envelope: MeshMessage, source: MessageSource) {
+        guard !processedMessageIds.contains(envelope.id) else { return }
+            processedMessageIds.insert(envelope.id)
+            if processedMessageIds.count > 1000 { processedMessageIds.removeAll() }
         if !activeGroupIds.contains(envelope.groupId) {
             // Auto-detect an incoming DM from a contact who messaged us first.
             guard envelope.messageType == .chat,

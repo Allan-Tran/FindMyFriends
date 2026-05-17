@@ -54,12 +54,11 @@ export const onDMRelayCreated = onDocumentCreated(
         },
         apns: {
           headers: {"apns-priority": "10", "apns-push-type": "alert"},
-          payload: {
-            aps: {
-              "content-available": 1,
-              alert: {title: senderUsername, body: "New message"},
-              sound: "default",
-            },
+            payload: {
+                        aps: {
+                          "content-available": 1,
+                          sound: "default",
+                        },
           },
         },
         android: {priority: "high"},

@@ -1,7 +1,10 @@
 import UserNotifications
 
+@MainActor
 enum LocalNotificationHelper {
+    static var suppressRelayNotifications = false
     static func postGroupChat(from username: String, preview: String, groupName: String, groupId: String) {
+        guard !suppressRelayNotifications else { return }
         let content = UNMutableNotificationContent()
         content.title = "\(username) in \(groupName)"
         content.body = formatted(preview)
@@ -11,6 +14,7 @@ enum LocalNotificationHelper {
     }
 
     static func postDMChat(from username: String, preview: String, dmId: String) {
+        guard !suppressRelayNotifications else { return }
         let content = UNMutableNotificationContent()
         content.title = username
         content.body = formatted(preview)
@@ -20,6 +24,7 @@ enum LocalNotificationHelper {
     }
 
     static func postPinAdded(by username: String, in groupName: String, groupId: String) {
+        guard !suppressRelayNotifications else { return }
         let content = UNMutableNotificationContent()
         content.title = "\(username) added a pin"
         content.body = "New pin in \(groupName)"

@@ -74,16 +74,26 @@ struct ZoomableMapView: UIViewRepresentable {
         let h = svWidth * image.size.height / max(image.size.width, 1)
         let size = CGSize(width: svWidth, height: h)
 
-        // Guard against container.frame.size, which changes with zoom (because
-        // UIScrollView applies a scale transform to the container). Instead compare
-        // against the stored unzoomed layoutSize so a zoomed re-render never resets
-        // contentSize or the container frame.
-        if let container = c.containerView, c.layoutSize != size {
-            container.frame = CGRect(origin: .zero, size: size)
-            c.imageView?.frame = CGRect(origin: .zero, size: size)
-            scroll.contentSize = size
-            c.layoutSize = size
-        }
+        let sizeDiff = abs(c.layoutSize.width - size.width)
+                if let container = c.containerView, sizeDiff > 1.0 {
+                    let restoreZoom = scroll.zoomScale
+                    let restoreOffset = scroll.contentOffset
+                    
+                    // Must reset to identity transform BEFORE modifying frames
+                    scroll.zoomScale = 1.0
+                    
+                    container.frame = CGRect(origin: .zero, size: size)
+                    c.imageView?.frame = CGRect(origin: .zero, size: size)
+                    scroll.contentSize = size
+                    c.layoutSize = size
+                    
+                    // Restore previous zoom state
+                    if restoreZoom > 1.0 {
+                        scroll.zoomScale = restoreZoom
+                        scroll.contentOffset = restoreOffset
+                        c.currentZoomScale = restoreZoom
+                    }
+                }
 
         let pinW = c.layoutSize.width  > 0 ? c.layoutSize.width  : svWidth
         let pinH = c.layoutSize.height > 0 ? c.layoutSize.height : h

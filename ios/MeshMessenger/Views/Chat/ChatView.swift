@@ -179,6 +179,7 @@ struct ChatView: View {
 struct MessageBubble: View {
     let message: LocalMessage
     let isMine: Bool
+    @State private var showFullScreen = false
 
     private var imageURL: URL? {
         guard message.content.hasPrefix("img:") else { return nil }
@@ -202,15 +203,19 @@ struct MessageBubble: View {
                         .foregroundStyle(.secondary)
                 }
                 if let url = imageURL {
-                    CachedAsyncImage(url: url)
-                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                        .frame(maxWidth: 240)
-                } else if let img = inlineImage {
-                    Image(uiImage: img)
-                        .resizable().scaledToFit()
-                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                        .frame(maxWidth: 240)
-                } else {
+                                    Button { showFullScreen = true } label: {
+                                        CachedAsyncImage(url: url)
+                                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                            .frame(maxWidth: 240)
+                                    }
+                                } else if let img = inlineImage {
+                                    Button { showFullScreen = true } label: {
+                                        Image(uiImage: img)
+                                            .resizable().scaledToFit()
+                                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                            .frame(maxWidth: 240)
+                                    }
+                                } else {
                     Text(message.content)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
@@ -226,6 +231,108 @@ struct MessageBubble: View {
                 .foregroundStyle(.secondary)
             }
             if !isMine { Spacer(minLength: 40) }
+        }
+        .fullScreenCover(isPresented: $showFullScreen) {
+                    FullScreenImageView(imageURL: imageURL, uiImage: inlineImage)
+                }
+    }
+}
+
+struct FullScreenImageView: View {
+    let imageURL: URL?
+    let uiImage: UIImage?
+    
+    @Environment(\.dismiss) private var dismiss
+    
+    // Persistent state across gestures
+    @State private var currentScale: CGFloat = 1.0
+    @State private var currentOffset: CGSize = .zero
+    
+    // Temporary state while gesture is actively happening
+    @GestureState private var magnifyBy: CGFloat = 1.0
+    @GestureState private var dragOffset: CGSize = .zero
+
+    var body: some View {
+        ZStack(alignment: .topTrailing) {
+            Color.black.ignoresSafeArea()
+            
+            GeometryReader { proxy in
+                ZStack {
+                    if let url = imageURL {
+                        CachedAsyncImage(url: url)
+                            .scaledToFit()
+                    } else if let img = uiImage {
+                        Image(uiImage: img)
+                            .resizable()
+                            .scaledToFit()
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                // Apply the combined scale and offset
+                .scaleEffect(currentScale * magnifyBy)
+                .offset(x: currentOffset.width + dragOffset.width,
+                        y: currentOffset.height + dragOffset.height)
+                // 1. Pinch to Zoom
+                .gesture(
+                    MagnificationGesture()
+                        .updating($magnifyBy) { value, state, _ in
+                            state = value
+                        }
+                        .onEnded { value in
+                            currentScale *= value
+                            // Snap back if zoomed out too far
+                            if currentScale < 1.0 {
+                                withAnimation(.spring()) {
+                                    currentScale = 1.0
+                                    currentOffset = .zero
+                                }
+                            } else if currentScale > 5.0 {
+                                // Cap maximum zoom
+                                withAnimation(.spring()) {
+                                    currentScale = 5.0
+                                }
+                            }
+                        }
+                )
+                // 2. Drag to Pan (only when zoomed in)
+                .simultaneousGesture(
+                    DragGesture()
+                        .updating($dragOffset) { value, state, _ in
+                            if currentScale > 1.0 {
+                                state = value.translation
+                            }
+                        }
+                        .onEnded { value in
+                            if currentScale > 1.0 {
+                                currentOffset.width += value.translation.width
+                                currentOffset.height += value.translation.height
+                            }
+                        }
+                )
+                // 3. Double Tap to quickly zoom in/out
+                .onTapGesture(count: 2) {
+                    withAnimation(.spring()) {
+                        if currentScale > 1.0 {
+                            currentScale = 1.0
+                            currentOffset = .zero
+                        } else {
+                            currentScale = 2.5
+                        }
+                    }
+                }
+            }
+            .ignoresSafeArea()
+            
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 28))
+                    .foregroundStyle(.white.opacity(0.8))
+                    // Add a slight dark background to the button so it's always visible over white images
+                    .background(Circle().fill(Color.black.opacity(0.3)))
+                    .padding()
+            }
         }
     }
 }

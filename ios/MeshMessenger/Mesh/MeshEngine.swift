@@ -23,6 +23,7 @@ final class MeshEngine: NSObject, ObservableObject {
     private var groupIds: Set<UUID> = []
     private let seenCache = SeenCache()
     private let reconnectManager = ReconnectManager()
+    private var heartbeatTask: Task<Void, Never>?
 
     func start(username: String, groupIds: Set<UUID>) {
         stop()
@@ -35,10 +36,17 @@ final class MeshEngine: NSObject, ObservableObject {
         session.delegate = self
         self.session = session
 
+        startAdvertisingAndBrowsing(peer: peer, groupIds: groupIds)
+        startHeartbeatLoop()
+        isRunning = true
+    }
+
+    private func startAdvertisingAndBrowsing(peer: MCPeerID, groupIds: Set<UUID>) {
         var discoveryInfo: [String: String] = ["u": username]
         if !groupIds.isEmpty {
             discoveryInfo["g"] = groupIds.map { $0.meshPrefix }.sorted().joined(separator: ",")
         }
+        
         let advertiser = MCNearbyServiceAdvertiser(peer: peer, discoveryInfo: discoveryInfo, serviceType: AppConfig.multipeerServiceType)
         advertiser.delegate = self
         advertiser.startAdvertisingPeer()
@@ -48,16 +56,33 @@ final class MeshEngine: NSObject, ObservableObject {
         browser.delegate = self
         browser.startBrowsingForPeers()
         self.browser = browser
-
-        isRunning = true
     }
 
     func updateGroups(_ ids: Set<UUID>) {
+        // FIX: Stop tearing down the entire MCSession socket when group scopes adjust.
         guard isRunning, ids != groupIds else { return }
-        start(username: username, groupIds: ids)
+        self.groupIds = ids
+        
+        // Cycle only the local advertisement headers with the updated discovery arrays
+        advertiser?.stopAdvertisingPeer()
+        advertiser?.delegate = nil
+        advertiser = nil
+        
+        if let peer = self.peerID {
+            var discoveryInfo: [String: String] = ["u": username]
+            if !ids.isEmpty {
+                discoveryInfo["g"] = ids.map { $0.meshPrefix }.sorted().joined(separator: ",")
+            }
+            let newAdvertiser = MCNearbyServiceAdvertiser(peer: peer, discoveryInfo: discoveryInfo, serviceType: AppConfig.multipeerServiceType)
+            newAdvertiser.delegate = self
+            newAdvertiser.startAdvertisingPeer()
+            self.advertiser = newAdvertiser
+        }
     }
 
     func stop() {
+        heartbeatTask?.cancel()
+        heartbeatTask = nil
         reconnectManager.cancelAll()
         advertiser?.stopAdvertisingPeer()
         advertiser?.delegate = nil
@@ -91,27 +116,52 @@ final class MeshEngine: NSObject, ObservableObject {
         }
     }
 
-    private func hasOverlap(with otherPrefixes: String?) -> Bool {
-        guard let raw = otherPrefixes, !raw.isEmpty else { return false }
-        let theirs = Set(raw.split(separator: ",").map(String.init))
-        let mine = Set(groupIds.map { $0.meshPrefix })
-        return !theirs.intersection(mine).isEmpty
+    private func startHeartbeatLoop() {
+        heartbeatTask?.cancel()
+        heartbeatTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 8_000_000_000) // 8s keepalive — frequent enough to prevent MCSession idle teardown
+                guard let self = self else { return }
+                
+                await MainActor.run {
+                    guard let session = self.session, !session.connectedPeers.isEmpty else { return }
+                    if let primaryGroup = self.groupIds.first {
+                        let ping = MeshMessage(
+                            groupId: primaryGroup,
+                            originPeerId: self.username,
+                            senderUsername: self.username,
+                            content: "",
+                            ttl: 1,
+                            messageType: .ack
+                        )
+                        self.sendEnvelope(ping, on: session, excluding: nil)
+                    }
+                }
+            }
+        }
     }
 
     fileprivate func handleReceived(_ data: Data, from peer: MCPeerID) {
         guard let envelope = try? MeshCodec.decoder.decode(MeshMessage.self, from: data) else { return }
-        guard groupIds.contains(envelope.groupId) else { return }
+        
+        // FIX: Allow inbound fallback DMs from unexpected users to bypass early filtering
+        let isPotentialDM = envelope.messageType == .chat && !envelope.senderUsername.isEmpty
+        guard groupIds.contains(envelope.groupId) || isPotentialDM else { return }
+        
         guard seenCache.insertIfNew(envelope.id) else { return }
 
         delegate?.meshEngine(self, didReceive: envelope)
 
-        if envelope.ttl > 1, envelope.messageType != .ack, let session = session {
+        // Only forward messages downstream if we actively track the group channel string
+        if groupIds.contains(envelope.groupId), envelope.ttl > 1, envelope.messageType != .ack, let session = session {
             var forwarded = envelope
             forwarded.ttl -= 1
             sendEnvelope(forwarded, on: session, excluding: peer)
         }
     }
 }
+
+// MARK: - MCSessionDelegate
 
 extension MeshEngine: MCSessionDelegate {
     nonisolated func session(_ session: MCSession, peer peerID: MCPeerID, didChange state: MCSessionState) {
@@ -161,14 +211,15 @@ extension MeshEngine: MCSessionDelegate {
     }
 }
 
+// MARK: - MCNearbyServiceAdvertiserDelegate
+
 extension MeshEngine: MCNearbyServiceAdvertiserDelegate {
     nonisolated func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
-        // Box the pre-concurrency callback so it can cross the actor boundary safely.
         nonisolated(unsafe) let handler = invitationHandler
         Task { @MainActor in
-            let ctxString = context.flatMap { String(data: $0, encoding: .utf8) }
-            let accept = self.hasOverlap(with: ctxString) || (ctxString == nil && !self.groupIds.isEmpty)
-            handler(accept, accept ? self.session : nil)
+            // Accept invitations globally from any node running our service type descriptor.
+            // Data routing and structural filters are completely handled inside MessageRouter.ingest().
+            handler(true, self.session)
         }
     }
 
@@ -179,12 +230,16 @@ extension MeshEngine: MCNearbyServiceAdvertiserDelegate {
     }
 }
 
+// MARK: - MCNearbyServiceBrowserDelegate
+
 extension MeshEngine: MCNearbyServiceBrowserDelegate {
     nonisolated func browser(_ browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID, withDiscoveryInfo info: [String: String]?) {
         Task { @MainActor in
             guard let session = self.session else { return }
-            let overlap = self.hasOverlap(with: info?["g"])
-            guard overlap else { return }
+            
+            // TIE-BREAKER: Prevent cross-invitation session collisions.
+            guard peerID.displayName > session.myPeerID.displayName else { return }
+            
             let context = self.groupIds.map { $0.meshPrefix }.sorted().joined(separator: ",").data(using: .utf8)
             browser.invitePeer(peerID, to: session, withContext: context, timeout: 15)
         }

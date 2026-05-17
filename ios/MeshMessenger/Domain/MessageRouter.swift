@@ -1,7 +1,9 @@
 import Foundation
 import SwiftData
 import Combine
+import UIKit
 @preconcurrency import MultipeerConnectivity
+import CoreBluetooth
 
 enum MessageSource: Sendable {
     case mesh
@@ -14,6 +16,7 @@ final class MessageRouter: ObservableObject, MeshEngineDelegate {
     @Published private(set) var activeGroupIds: Set<UUID> = []
     private var realGroupIds: Set<UUID> = []
     private var dmIds: Set<UUID> = []
+    private var backgroundTaskId: UIBackgroundTaskIdentifier = .invalid
 
     /// Called when a chat message arrives for a DM UUID that wasn't pre-registered.
     /// DMStore sets this to create the conversation and subscribe to Firestore relay.
@@ -50,6 +53,9 @@ final class MessageRouter: ObservableObject, MeshEngineDelegate {
         self.peerRepository = peerRepository
         meshEngine.delegate = self
         syncEngine.attach(router: self)
+        
+        proximityEngine.delegate = self
+        setupBackgroundLifecycleObservers()
     }
 
     func start(username: String, groupIds: Set<UUID>) {
@@ -115,6 +121,10 @@ final class MessageRouter: ObservableObject, MeshEngineDelegate {
         )
         persist(envelope, status: .sent)
         meshEngine.broadcast(envelope)
+        // Also push via BLE so backgrounded peers receive messages even when MCSession is suspended.
+        if let data = try? MeshCodec.encoder.encode(envelope) {
+            proximityEngine.broadcastMessageData(data)
+        }
         if dmIds.contains(groupId) {
             await onDMRelaySend?(envelope, groupId)
         } else if let uid = session.currentUid {
@@ -148,17 +158,27 @@ final class MessageRouter: ObservableObject, MeshEngineDelegate {
         }
     }
 
-    // MARK: MeshEngineDelegate
+    // MARK: - MeshEngineDelegate
 
     nonisolated func meshEngine(_ engine: MeshEngine, didReceive envelope: MeshMessage) {
-        Task { @MainActor in self.ingest(envelope, source: .mesh) }
+        Task { @MainActor in
+            self.ingest(envelope, source: .mesh)
+        }
     }
 
     nonisolated func meshEngine(_ engine: MeshEngine, didUpdateConnectedPeers peers: [MCPeerID]) {
-        // could push events; UI binds to engine directly
-    }
+            // 1. Evaluate the collection state synchronously on the background thread
+            let hasConnectedPeers = !peers.isEmpty
+            
+            Task { @MainActor in
+                // 2. Safely capture and pass only the Sendable Bool into the Main Actor
+                if hasConnectedPeers {
+                    self.retryPendingMessagesAcrossActiveGroups()
+                }
+            }
+        }
 
-    // MARK: private
+    // MARK: - Private Core Logic
 
     private func persist(_ envelope: MeshMessage, status: DeliveryStatus) {
         let local = LocalMessage(
@@ -204,5 +224,100 @@ final class MessageRouter: ObservableObject, MeshEngineDelegate {
         for username in payload.memberUsernames {
             try? peerRepository.touch(peerId: username, username: username, groupId: payload.groupId)
         }
+    }
+    
+    private func retryPendingMessagesAcrossActiveGroups() {
+        for groupId in activeGroupIds {
+            guard let undeliveredMessages = try? messageRepository.pendingMessages(in: groupId) else { continue }
+            
+            for localMsg in undeliveredMessages {
+                let envelope = MeshMessage(
+                    id: localMsg.id,
+                    groupId: localMsg.groupId,
+                    originPeerId: localMsg.senderUsername,
+                    senderUsername: localMsg.senderUsername,
+                    content: localMsg.content,
+                    sentAt: localMsg.sentAt,
+                    ttl: AppConfig.defaultMessageTTL,
+                    messageType: .chat
+                )
+                meshEngine.broadcast(envelope)
+            }
+        }
+    }
+
+    // MARK: - Background Lifecycle Management
+
+    private func setupBackgroundLifecycleObservers() {
+        NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in self?.handleDidEnterBackground() }
+        }
+        NotificationCenter.default.addObserver(forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in self?.handleWillEnterForeground() }
+        }
+    }
+
+    private func handleDidEnterBackground() {
+        self.backgroundTaskId = UIApplication.shared.beginBackgroundTask(withName: "MeshMessengerSocketFlush") { [weak self] in
+            Task { @MainActor in self?.endBackgroundTask() }
+        }
+        
+        retryPendingMessagesAcrossActiveGroups()
+        
+        Task {
+            try? await Task.sleep(nanoseconds: 8_000_000_000)
+            await MainActor.run {
+                self.endBackgroundTask()
+            }
+        }
+    }
+
+    private func endBackgroundTask() {
+        if backgroundTaskId != .invalid {
+            UIApplication.shared.endBackgroundTask(backgroundTaskId)
+            backgroundTaskId = .invalid
+        }
+    }
+
+    private func handleWillEnterForeground() {
+        endBackgroundTask()
+        retryPendingMessagesAcrossActiveGroups()
+    }
+}
+
+// MARK: - ProximityEngineDelegate
+
+extension MessageRouter: ProximityEngineDelegate {
+    func proximityEngine(_ engine: ProximityEngine, didDiscoverUsername username: String, peripheral: CBPeripheral) {
+        for groupId in activeGroupIds {
+            if dmIds.contains(groupId) {
+                guard let myUsername = session.currentUsername,
+                      DMStore.conversationId(userA: myUsername, userB: username) == groupId else { continue }
+            }
+            
+            guard let pending = try? messageRepository.pendingMessages(in: groupId) else { continue }
+            
+            for localMsg in pending {
+                let envelope = MeshMessage(
+                    id: localMsg.id,
+                    groupId: localMsg.groupId,
+                    originPeerId: localMsg.senderUsername,
+                    senderUsername: localMsg.senderUsername,
+                    content: localMsg.content,
+                    sentAt: localMsg.sentAt,
+                    ttl: 1,
+                    messageType: .chat
+                )
+                
+                if let data = try? MeshCodec.encoder.encode(envelope) {
+                    engine.writeMessageData(data, to: peripheral)
+                }
+            }
+        }
+    }
+
+    func proximityEngine(_ engine: ProximityEngine, didReceiveMessageData data: Data) {
+        guard let envelope = try? MeshCodec.decoder.decode(MeshMessage.self, from: data) else { return }
+        self.ingest(envelope, source: .mesh)
     }
 }

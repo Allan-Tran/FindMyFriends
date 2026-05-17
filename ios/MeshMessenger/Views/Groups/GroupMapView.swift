@@ -40,10 +40,10 @@ private final class MapViewModel: ObservableObject {
         mapUrlListener = nil
     }
 
-    func addPin(groupId: String, x: Double, y: Double, username: String, uid: String) async {
+    func addPin(groupId: String, x: Double, y: Double, username: String, uid: String, description: String) async {
         let hex = GroupMapView.colorHex(for: username)
         do {
-            try await service.addPin(groupId: groupId, x: x, y: y, username: username, uid: uid, colorHex: hex)
+            try await service.addPin(groupId: groupId, x: x, y: y, username: username, uid: uid, colorHex: hex, description: description)
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -121,6 +121,8 @@ struct GroupMapView: View {
 
     @State private var selectedPin: FirestorePin?
     @State private var imageItem: PhotosPickerItem?
+    @State private var pendingPinLocation: CGPoint?
+    @State private var pendingPinDescription: String = ""
 
     private var group: LocalGroup? {
         groupStore.groups.first { $0.id == groupId }
@@ -177,6 +179,12 @@ struct GroupMapView: View {
         .sheet(item: $selectedPin) { pin in
             pinDetail(pin: pin)
         }
+        .sheet(isPresented: Binding(
+            get: { pendingPinLocation != nil },
+            set: { if !$0 { pendingPinLocation = nil; pendingPinDescription = "" } }
+        )) {
+            pinPlacementSheet
+        }
         .alert("Error", isPresented: Binding(
             get: { vm.errorMessage != nil },
             set: { if !$0 { vm.errorMessage = nil } }
@@ -205,15 +213,9 @@ struct GroupMapView: View {
                                         let nx = val.location.x / geo.size.width
                                         let ny = val.location.y / geo.size.height
                                         guard (0...1).contains(nx), (0...1).contains(ny) else { return }
-                                        guard let username = session.currentUsername,
-                                              let uid = session.currentUid else { return }
-                                        Task {
-                                            await vm.addPin(
-                                                groupId: groupId.uuidString,
-                                                x: nx, y: ny,
-                                                username: username, uid: uid
-                                            )
-                                        }
+                                        guard session.currentUsername != nil,
+                                              session.currentUid != nil else { return }
+                                        pendingPinLocation = CGPoint(x: nx, y: ny)
                                     }
                             )
 
@@ -264,6 +266,50 @@ struct GroupMapView: View {
     }
 
     @ViewBuilder
+    private var pinPlacementSheet: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("What's here? (optional)", text: $pendingPinDescription, axis: .vertical)
+                        .lineLimit(2...5)
+                } header: {
+                    Text("Description")
+                }
+            }
+            .navigationTitle("Place Pin")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") {
+                        pendingPinLocation = nil
+                        pendingPinDescription = ""
+                    }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Place") {
+                        guard let loc = pendingPinLocation,
+                              let username = session.currentUsername,
+                              let uid = session.currentUid else { return }
+                        let desc = pendingPinDescription.trimmingCharacters(in: .whitespacesAndNewlines)
+                        pendingPinLocation = nil
+                        pendingPinDescription = ""
+                        Task {
+                            await vm.addPin(
+                                groupId: groupId.uuidString,
+                                x: loc.x, y: loc.y,
+                                username: username, uid: uid,
+                                description: desc
+                            )
+                        }
+                    }
+                    .fontWeight(.semibold)
+                }
+            }
+        }
+        .presentationDetents([.medium])
+    }
+
+    @ViewBuilder
     private func pinDetail(pin: FirestorePin) -> some View {
         NavigationStack {
             VStack(spacing: 20) {
@@ -281,6 +327,12 @@ struct GroupMapView: View {
                     Text(pin.createdAt.dateValue(), style: .time)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
+                }
+                if let desc = pin.description, !desc.isEmpty {
+                    Text(desc)
+                        .font(.body)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
                 }
                 if pin.uid == session.currentUid || isAdmin {
                     Button("Remove Pin", role: .destructive) {

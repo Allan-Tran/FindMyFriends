@@ -59,14 +59,17 @@ struct MapService: Sendable {
             }
     }
 
-    func addPin(groupId: String, x: Double, y: Double, username: String, uid: String, colorHex: String) async throws {
-        let data: [String: Any] = [
+    func addPin(groupId: String, x: Double, y: Double, username: String, uid: String, colorHex: String, description: String = "") async throws {
+        var data: [String: Any] = [
             "x": x, "y": y,
             "username": username,
             "uid": uid,
             "colorHex": colorHex,
             "createdAt": Timestamp(date: Date())
         ]
+        if !description.isEmpty {
+            data["description"] = description
+        }
         try await db.collection("groups").document(groupId)
             .collection("pins").document().setData(data)
     }

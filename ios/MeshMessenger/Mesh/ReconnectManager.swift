@@ -61,13 +61,17 @@ final class ReconnectManager {
     }
 
     private func invite(
-        _ peer: MCPeerID,
-        via browser: MCNearbyServiceBrowser,
-        on session: MCSession,
-        context: Data?,
-        timeout: TimeInterval
-    ) {
-        guard session.connectedPeers.first(where: { $0 == peer }) == nil else { return }
-        browser.invitePeer(peer, to: session, withContext: context, timeout: timeout)
-    }
+            _ peer: MCPeerID,
+            via browser: MCNearbyServiceBrowser,
+            on session: MCSession,
+            context: Data?,
+            timeout: TimeInterval
+        ) {
+            guard session.connectedPeers.first(where: { $0 == peer }) == nil else { return }
+            
+            // FIX: Enforce symmetric tie-breaker discipline during re-invitations
+            guard peer.displayName > session.myPeerID.displayName else { return }
+            
+            browser.invitePeer(peer, to: session, withContext: context, timeout: timeout)
+        }
 }

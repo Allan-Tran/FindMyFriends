@@ -45,6 +45,18 @@ struct MessageRepository {
         for msg in stale { context.delete(msg) }
         if !stale.isEmpty { try context.save() }
     }
+    
+    func pendingMessages(in groupId: UUID) throws -> [LocalMessage] {
+            // 1. Extract the raw string value outside of the macro expression
+            let targetRawValue = DeliveryStatus.pending.rawValue
+            
+            // 2. Query against the stored property 'deliveryStatusRaw' instead
+            let descriptor = FetchDescriptor<LocalMessage>(
+                predicate: #Predicate { $0.groupId == groupId && $0.deliveryStatusRaw == targetRawValue },
+                sortBy: [SortDescriptor(\.sentAt, order: .forward)]
+            )
+            return try context.fetch(descriptor)
+        }
 }
 
 @MainActor

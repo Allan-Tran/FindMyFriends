@@ -44,6 +44,7 @@ struct FirestorePin: Codable, Sendable, Identifiable {
     var uid: String
     var colorHex: String
     var createdAt: Timestamp
+    var description: String?
 }
 
 struct FirestoreMembership: Codable, Sendable {

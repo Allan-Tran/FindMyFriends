@@ -78,4 +78,38 @@ struct MapService: Sendable {
         try await db.collection("groups").document(groupId)
             .collection("pins").document(pinId).delete()
     }
+
+    func addPinComment(groupId: String, pinId: String, username: String, text: String) async throws {
+        let data: [String: Any] = [
+            "username": username,
+            "text": text,
+            "createdAt": Timestamp(date: Date())
+        ]
+        try await db.collection("groups").document(groupId)
+            .collection("pins").document(pinId)
+            .collection("comments").document().setData(data)
+    }
+
+    func observePinComments(groupId: String, pinId: String, onChange: @escaping ([PinComment]) -> Void) -> ListenerRegistration {
+        db.collection("groups").document(groupId)
+            .collection("pins").document(pinId)
+            .collection("comments")
+            .order(by: "createdAt", descending: false)
+            .addSnapshotListener { snap, error in
+                if let error = error {
+                    print("[PinComments] listener error: \(error.localizedDescription)")
+                    onChange([])
+                    return
+                }
+                guard let snap else { onChange([]); return }
+                let comments = snap.documents.compactMap { try? $0.data(as: PinComment.self) }
+                onChange(comments)
+            }
+    }
+
+    func updatePinDescription(groupId: String, pinId: String, description: String) async throws {
+        try await db.collection("groups").document(groupId)
+            .collection("pins").document(pinId)
+            .updateData(["description": description])
+    }
 }

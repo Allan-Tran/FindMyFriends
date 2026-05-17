@@ -137,7 +137,7 @@ final class GroupStore: ObservableObject {
     }
 
     private func setupRouterCallbacks() {
-        router?.onIncomingGroupChat = { [weak self] groupId, senderUsername, sentAt in
+        router?.onIncomingGroupChat = { [weak self] groupId, senderUsername, sentAt, content in
             guard let self,
                   let myUsername = self.session.currentUsername,
                   senderUsername != myUsername,
@@ -147,6 +147,12 @@ final class GroupStore: ObservableObject {
             group.unreadCount += 1
             try? self.repository.save(group)
             self.objectWillChange.send()
+            LocalNotificationHelper.postGroupChat(
+                from: senderUsername,
+                preview: content,
+                groupName: group.name,
+                groupId: groupId.uuidString
+            )
         }
     }
 

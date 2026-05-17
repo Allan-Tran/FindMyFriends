@@ -38,6 +38,14 @@ final class DMStore: ObservableObject {
             guard let self, let uid = self.session.currentUid else { return }
             try? await self.dmRelayService.post(envelope: envelope, dmId: dmId.uuidString, senderUid: uid)
         }
+
+        router.onIncomingDMChat = { [weak self] dmId, senderUsername, sentAt, content in
+            guard let self,
+                  let conv = self.conversations.first(where: { $0.id == dmId }),
+                  sentAt > conv.lastReadAt,
+                  self.activeConversationId != dmId else { return }
+            LocalNotificationHelper.postDMChat(from: senderUsername, preview: content, dmId: dmId.uuidString)
+        }
     }
 
     func load() {
@@ -135,6 +143,11 @@ final class DMStore: ObservableObject {
            activeConversationId != dmId {
             conv.unreadCount += 1
             try? context.save()
+            LocalNotificationHelper.postDMChat(
+                from: envelope.senderUsername,
+                preview: envelope.content,
+                dmId: dmId.uuidString
+            )
         }
         markUpdated(dmId)
     }

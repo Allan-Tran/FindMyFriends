@@ -8,7 +8,7 @@ final class LocalGroup: Identifiable {
     var adminId: String
     var inviteCode: String
     var createdAt: Date
-    var memberUsernames: [String]
+    @Attribute(.externalStorage) var memberUsernames: [String]
     var lastSyncedAt: Date?
     var unreadCount: Int = 0
     var lastReadAt: Date = Date()

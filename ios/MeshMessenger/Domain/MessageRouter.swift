@@ -28,7 +28,11 @@ final class MessageRouter: ObservableObject, MeshEngineDelegate {
 
     /// Called whenever a chat message arrives for a real group (not a DM).
     /// GroupStore sets this to increment that group's unread count.
-    var onIncomingGroupChat: ((UUID, String, Date) -> Void)?
+    var onIncomingGroupChat: ((UUID, String, Date, String) -> Void)?
+
+    /// Called whenever a chat message arrives for a DM conversation.
+    /// DMStore sets this to post a local notification when the conversation isn't active.
+    var onIncomingDMChat: ((UUID, String, Date, String) -> Void)?
 
     let meshEngine: MeshEngine
     let proximityEngine: ProximityEngine
@@ -93,6 +97,19 @@ final class MessageRouter: ObservableObject, MeshEngineDelegate {
         activeGroupIds = []
     }
 
+    func pauseMesh() {
+        meshEngine.stop()
+        proximityEngine.stop()
+    }
+
+    func resumeMesh() {
+        guard let username = session.currentUsername else { return }
+        let all = realGroupIds.union(dmIds)
+        activeGroupIds = all
+        meshEngine.start(username: username, groupIds: all)
+        proximityEngine.start(localIdentity: username)
+    }
+
     /// Mesh-only send — never touches the Firebase relay.
     /// Used for large payloads (e.g. inline image data) that must not be
     /// written to Firestore. TTL=1 prevents multi-hop flooding.
@@ -146,8 +163,10 @@ final class MessageRouter: ObservableObject, MeshEngineDelegate {
         switch envelope.messageType {
         case .chat:
             persist(envelope, status: .delivered)
-            if !dmIds.contains(envelope.groupId) {
-                onIncomingGroupChat?(envelope.groupId, envelope.senderUsername, envelope.sentAt)
+            if dmIds.contains(envelope.groupId) {
+                onIncomingDMChat?(envelope.groupId, envelope.senderUsername, envelope.sentAt, envelope.content)
+            } else {
+                onIncomingGroupChat?(envelope.groupId, envelope.senderUsername, envelope.sentAt, envelope.content)
             }
         case .peerAnnounce:
             handlePeerAnnounce(envelope)

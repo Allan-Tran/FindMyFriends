@@ -1,6 +1,23 @@
 import Foundation
 @preconcurrency import CoreBluetooth
 import UIKit
+import os.log
+
+private let bleLog = Logger(subsystem: Bundle.main.bundleIdentifier ?? "MeshMessenger", category: "ProximityEngine")
+
+private extension CBManagerState {
+    var debugDescription: String {
+        switch self {
+        case .unknown: return "unknown"
+        case .resetting: return "resetting"
+        case .unsupported: return "unsupported"
+        case .unauthorized: return "unauthorized"
+        case .poweredOff: return "poweredOff"
+        case .poweredOn: return "poweredOn"
+        @unknown default: return "unhandled(\(rawValue))"
+        }
+    }
+}
 
 @MainActor
 protocol ProximityEngineDelegate: AnyObject, Sendable {
@@ -35,6 +52,8 @@ final class ProximityEngine: NSObject, ObservableObject {
     private var identityValueLocal: Data = Data()
     private var localUsername: String = ""
     private var connectedPeripherals: [String: CBPeripheral] = [:]
+    private var pendingConnections: Set<String> = []
+    private var rssiTimerTask: Task<Void, Never>?
 
     private let serviceUUID = CBUUID(string: AppConfig.proximityServiceUUID)
     private let identityCharacteristicUUID = CBUUID(string: AppConfig.proximityIdentityCharacteristicUUID)
@@ -69,9 +88,13 @@ final class ProximityEngine: NSObject, ObservableObject {
             ]
         )
         isRunning = true
+        startRSSIPolling()
     }
 
     func stop() {
+        isRunning = false   // set first so async callbacks skip reconnect logic
+        rssiTimerTask?.cancel()
+        rssiTimerTask = nil
         for (_, p) in connectedPeripherals { central?.cancelPeripheralConnection(p) }
         central?.stopScan()
         central = nil
@@ -83,8 +106,8 @@ final class ProximityEngine: NSObject, ObservableObject {
         filters.removeAll()
         lastSeen.removeAll()
         connectedPeripherals.removeAll()
+        pendingConnections.removeAll()
         peers = []
-        isRunning = false
     }
 
     func attachUsername(_ username: String, to peerKey: String) {
@@ -93,7 +116,7 @@ final class ProximityEngine: NSObject, ObservableObject {
     }
 
     func writeMessageData(_ data: Data, to peripheral: CBPeripheral) {
-        guard let services = peripheral.services else { return }
+        guard peripheral.state == .connected, let services = peripheral.services else { return }
         for service in services where service.uuid == self.serviceUUID {
             guard let characteristics = service.characteristics else { continue }
             for characteristic in characteristics where characteristic.uuid == self.messageCharacteristicUUID {
@@ -113,8 +136,35 @@ final class ProximityEngine: NSObject, ObservableObject {
 
     // MARK: - Private helpers
 
+    private func startRSSIPolling() {
+        rssiTimerTask?.cancel()
+        bleLog.info("[rssi] polling loop started")
+        rssiTimerTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 3_000_000_000)
+                guard let self = self else { return }
+                await MainActor.run {
+                    let count = self.connectedPeripherals.count
+                    bleLog.info("[rssi] polling \(count, privacy: .public) connected peripheral(s)")
+                    for (key, peripheral) in self.connectedPeripherals {
+                        guard peripheral.state == .connected else {
+                            bleLog.debug("[rssi] skip readRSSI — \(key, privacy: .public) not connected (state=\(peripheral.state.rawValue, privacy: .public))")
+                            continue
+                        }
+                        bleLog.debug("[rssi] readRSSI → \(key, privacy: .public)")
+                        peripheral.readRSSI()
+                    }
+                }
+            }
+            bleLog.info("[rssi] polling loop ended (task cancelled)")
+        }
+    }
+
     private func buildAndAdvertise() {
-        guard let peripheral else { return }
+        guard let peripheral, peripheral.state == .poweredOn else {
+            bleLog.warning("[peripheral] buildAndAdvertise skipped — manager not ready (state=\(self.peripheral?.state.rawValue ?? -1, privacy: .public))")
+            return
+        }
         peripheral.removeAllServices()
 
         let identityCharacteristic = CBMutableCharacteristic(
@@ -176,6 +226,11 @@ final class ProximityEngine: NSObject, ObservableObject {
 
     private func pruneStale() {
         let cutoff = Date().addingTimeInterval(-Self.staleThreshold)
+        let stale = peers.filter { $0.lastSeenAt < cutoff }
+        for p in stale {
+            let age = Date().timeIntervalSince(p.lastSeenAt)
+            bleLog.warning("[prune] 🗑 removing \(p.id, privacy: .public) (\(p.username ?? "?", privacy: .public)) — last seen \(String(format: "%.1f", age), privacy: .public)s ago")
+        }
         peers.removeAll { $0.lastSeenAt < cutoff }
     }
 }
@@ -190,63 +245,100 @@ extension ProximityEngine: CBCentralManagerDelegate {
             for p in restored {
                 let key = p.identifier.uuidString
                 p.delegate = self
-                self.connectedPeripherals[key] = p
-                if p.services == nil {
-                    p.discoverServices([self.serviceUUID])
+                switch p.state {
+                case .connected:
+                    self.connectedPeripherals[key] = p
+                    if p.services == nil { p.discoverServices([self.serviceUUID]) }
+                case .connecting:
+                    // OS is still trying to connect — just track it; connect() not needed.
+                    self.pendingConnections.insert(key)
+                default:
+                    // .disconnected / .disconnecting: the OS dropped the request.
+                    // Don't add to pendingConnections — let didDiscover handle a fresh connect.
+                    break
                 }
             }
         }
     }
 
     nonisolated func centralManagerDidUpdateState(_ central: CBCentralManager) {
+        let state = central.state
         Task { @MainActor in
-            guard central.state == .poweredOn else { return }
-            central.scanForPeripherals(withServices: [self.serviceUUID], options: nil)
+            bleLog.info("[central] state changed → \(state.debugDescription, privacy: .public)")
+            guard state == .poweredOn else { return }
+            guard self.isRunning else {
+                bleLog.info("[central] poweredOn but engine stopped — skipping scan")
+                return
+            }
+            self.central?.scanForPeripherals(withServices: [self.serviceUUID], options: [CBCentralManagerScanOptionAllowDuplicatesKey: true])
+            bleLog.info("[central] scan started")
         }
     }
 
     nonisolated func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String: Any], rssi RSSI: NSNumber) {
         let key = peripheral.identifier.uuidString
         let rssiValue = RSSI.intValue
+        let name = advertisementData[CBAdvertisementDataLocalNameKey] as? String ?? "?"
+        bleLog.info("[discover] 📡 found \(key, privacy: .public) rssi=\(rssiValue, privacy: .public) name=\(name, privacy: .public)")
 
         Task { @MainActor in
             self.ingest(rssi: rssiValue, for: key)
 
-            // Connect to any undiscovered peer regardless of whether we know their username —
-            // we need the connection to stay alive for background message delivery.
-            if self.connectedPeripherals[key] == nil {
+            // Only start connecting if not already connected or connecting.
+            // connectedPeripherals is populated in didConnect, not here, to
+            // prevent commands being sent to a peripheral in .connecting state.
+            let alreadyConnected = self.connectedPeripherals[key] != nil
+            let alreadyPending   = self.pendingConnections.contains(key)
+            if !alreadyConnected && !alreadyPending {
                 peripheral.delegate = self
-                self.connectedPeripherals[key] = peripheral
-                central.connect(peripheral, options: nil)
+                self.pendingConnections.insert(key)
+                bleLog.info("[discover] 🔗 initiating connect to \(key, privacy: .public)")
+                self.central?.connect(peripheral, options: nil)
             }
         }
     }
 
     nonisolated func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
+        let key = peripheral.identifier.uuidString
+        bleLog.info("[connect] ✅ connected to \(key, privacy: .public) — discovering services")
         Task { @MainActor in
+            self.pendingConnections.remove(key)
+            self.connectedPeripherals[key] = peripheral
             peripheral.discoverServices([self.serviceUUID])
         }
     }
 
     nonisolated func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
         let key = peripheral.identifier.uuidString
+        let desc = error.map { "\($0)" } ?? "nil"
+        let code = (error as? CBError).map { "\($0.code.rawValue)" } ?? "?"
+        bleLog.error("[connect] ❌ FAILED to connect \(key, privacy: .public) — code=\(code, privacy: .public) \(desc, privacy: .public)")
         Task { @MainActor in
-            // Hard failure (not a transient drop) — clear the slot so didDiscover
-            // can try again when the peer is next seen.
+            // Hard failure — clear both tracking sets so didDiscover can retry on next advertisement.
+            self.pendingConnections.remove(key)
             self.connectedPeripherals.removeValue(forKey: key)
         }
     }
 
     nonisolated func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
         let key = peripheral.identifier.uuidString
+        if let error = error {
+            let cbCode = (error as? CBError)?.code.rawValue
+            let desc = "\(error)"
+            bleLog.warning("[disconnect] ⚠️ \(key, privacy: .public) dropped — cbErrorCode=\(cbCode.map(String.init) ?? "?", privacy: .public) — \(desc, privacy: .public)")
+        } else {
+            bleLog.info("[disconnect] \(key, privacy: .public) gracefully disconnected (nil error — likely cancelPeripheralConnection)")
+        }
         Task { @MainActor in
-            // Keep the peripheral in connectedPeripherals so didDiscover doesn't open a
-            // duplicate connection attempt while the persistent reconnect is in flight.
-            self.connectedPeripherals[key] = peripheral
+            self.connectedPeripherals.removeValue(forKey: key)
+            // Don't reconnect if the engine was stopped while this task was queued.
+            guard self.isRunning else { return }
+            self.pendingConnections.insert(key)
             let options: [String: Any] = [
                 CBConnectPeripheralOptionNotifyOnConnectionKey: true,
                 CBConnectPeripheralOptionNotifyOnDisconnectionKey: true
             ]
+            bleLog.info("[disconnect] 🔄 scheduling persistent reconnect for \(key, privacy: .public)")
             self.central?.connect(peripheral, options: options)
         }
     }
@@ -276,6 +368,20 @@ extension ProximityEngine: CBPeripheralDelegate {
                     peripheral.setNotifyValue(true, for: characteristic)
                 }
             }
+        }
+    }
+
+    nonisolated func peripheral(_ peripheral: CBPeripheral, didReadRSSI RSSI: NSNumber, error: Error?) {
+        let key = peripheral.identifier.uuidString
+        if let error = error {
+            let cbCode = (error as? CBError)?.code.rawValue
+            bleLog.warning("[rssi] ❌ readRSSI failed for \(key, privacy: .public) — cbErrorCode=\(cbCode.map(String.init) ?? "?", privacy: .public) — \(error, privacy: .public)")
+            return
+        }
+        let rssiValue = RSSI.intValue
+        bleLog.debug("[rssi] ✅ \(key, privacy: .public) → \(rssiValue, privacy: .public) dBm")
+        Task { @MainActor in
+            self.ingest(rssi: rssiValue, for: key)
         }
     }
 
@@ -317,11 +423,27 @@ extension ProximityEngine: CBPeripheralManagerDelegate {
     nonisolated func peripheralManagerDidUpdateState(_ peripheral: CBPeripheralManager) {
         Task { @MainActor in
             guard peripheral.state == .poweredOn else { return }
-            // Skip setup if willRestoreState already gave us the characteristic —
-            // removing services would break existing subscriptions from connected centrals.
-            if self.messageCharacteristic == nil {
+            if peripheral.isAdvertising {
+                return  // already live — nothing to do
+            }
+            if self.messageCharacteristic != nil {
+                // Services were restored by willRestoreState; don't tear them down
+                // (that would drop existing central subscriptions). Just restart advertising.
+                peripheral.startAdvertising([
+                    CBAdvertisementDataServiceUUIDsKey: [self.serviceUUID],
+                    CBAdvertisementDataLocalNameKey: self.localUsername
+                ])
+            } else {
                 self.buildAndAdvertise()
             }
+        }
+    }
+
+    nonisolated func peripheralManagerDidStartAdvertising(_ peripheral: CBPeripheralManager, error: Error?) {
+        if let error = error {
+            bleLog.error("[peripheral] ❌ advertising FAILED: \(error, privacy: .public)")
+        } else {
+            bleLog.info("[peripheral] ✅ advertising started successfully")
         }
     }
 

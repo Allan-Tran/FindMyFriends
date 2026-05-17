@@ -5,8 +5,8 @@ enum AppConfig {
     /// suite. Run `firebase emulators:start` in firebase/ first.
     /// Simulator uses "localhost"; a physical device needs your Mac's LAN IP.
     #if DEBUG
-    static let useEmulator: Bool = true
-    static let emulatorHost: String = "127.0.0.1"
+    static let useEmulator: Bool = false
+    static let emulatorHost: String = ""
     #else
     static let useEmulator: Bool = false
     static let emulatorHost: String = ""

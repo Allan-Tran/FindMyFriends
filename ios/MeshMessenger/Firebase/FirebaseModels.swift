@@ -47,6 +47,13 @@ struct FirestorePin: Codable, Sendable, Identifiable {
     var description: String?
 }
 
+struct PinComment: Codable, Sendable, Identifiable {
+    @DocumentID var id: String?
+    var username: String
+    var text: String
+    var createdAt: Timestamp
+}
+
 struct FirestoreMembership: Codable, Sendable {
     @DocumentID var id: String?
     var uid: String?

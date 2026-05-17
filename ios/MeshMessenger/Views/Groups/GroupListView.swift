@@ -7,6 +7,7 @@ struct GroupListView: View {
     @EnvironmentObject private var dmStore: DMStore
     @State private var showCreate = false
     @State private var showJoin = false
+    @AppStorage("meshEnabled") private var meshEnabled = true
 
     var body: some View {
         NavigationStack {
@@ -49,6 +50,13 @@ struct GroupListView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Menu {
+                        Toggle(isOn: $meshEnabled) {
+                            Label("Bluetooth Mesh", systemImage: meshEnabled ? "antenna.radiowaves.left.and.right" : "antenna.radiowaves.left.and.right.slash")
+                        }
+                        .onChange(of: meshEnabled) { _, enabled in
+                            if enabled { router.resumeMesh() } else { router.pauseMesh() }
+                        }
+                        Divider()
                         Button("Sign out", role: .destructive) {
                             Task { await session.signOut() }
                         }
@@ -94,10 +102,16 @@ struct GroupListView: View {
     private func syncRouterGroups() {
         let ids = Set(groupStore.groups.map(\.id))
         guard let username = session.currentUsername else { return }
-        if !router.meshEngine.isRunning {
-            router.start(username: username, groupIds: ids)
+        if meshEnabled {
+            if !router.meshEngine.isRunning {
+                router.start(username: username, groupIds: ids)
+            } else {
+                router.updateActiveGroups(ids)
+            }
         } else {
+            // Mesh disabled — keep sync engine running for Firestore relay only
             router.updateActiveGroups(ids)
+            if router.meshEngine.isRunning { router.pauseMesh() }
         }
     }
 }

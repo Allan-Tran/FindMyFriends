@@ -61,6 +61,9 @@
 		B0000000000000000000003F /* BlockStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000003F /* BlockStore.swift */; };
 		B00000000000000000000040 /* ReportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000040 /* ReportService.swift */; };
 		B00000000000000000000041 /* StorageReference+Retry.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000041 /* StorageReference+Retry.swift */; };
+		B00000000000000000000042 /* LocalNotificationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000042 /* LocalNotificationHelper.swift */; };
+		B00000000000000000000043 /* ZoomableMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000043 /* ZoomableMapView.swift */; };
+		B00000000000000000000044 /* ImageCacheService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000044 /* ImageCacheService.swift */; };
 		E00000000000000000000001 /* MultipeerConnectivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D00000000000000000000001 /* MultipeerConnectivity.framework */; };
 		E00000000000000000000002 /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D00000000000000000000002 /* CoreBluetooth.framework */; };
 		E00000000000000000000003 /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D00000000000000000000003 /* UserNotifications.framework */; };
@@ -129,6 +132,9 @@
 		A0000000000000000000003F /* BlockStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockStore.swift; sourceTree = "<group>"; };
 		A00000000000000000000040 /* ReportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportService.swift; sourceTree = "<group>"; };
 		A00000000000000000000041 /* StorageReference+Retry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "StorageReference+Retry.swift"; sourceTree = "<group>"; };
+		A00000000000000000000042 /* LocalNotificationHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalNotificationHelper.swift; sourceTree = "<group>"; };
+		A00000000000000000000043 /* ZoomableMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZoomableMapView.swift; sourceTree = "<group>"; };
+		A00000000000000000000044 /* ImageCacheService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCacheService.swift; sourceTree = "<group>"; };
 		D00000000000000000000001 /* MultipeerConnectivity.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MultipeerConnectivity.framework; path = System/Library/Frameworks/MultipeerConnectivity.framework; sourceTree = SDKROOT; };
 		D00000000000000000000002 /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
 		D00000000000000000000003 /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
@@ -267,6 +273,7 @@
 			children = (
 				A0000000000000000000001A /* AppDelegate.swift */,
 				A0000000000000000000001B /* PushNotificationCenter.swift */,
+				A00000000000000000000042 /* LocalNotificationHelper.swift */,
 			);
 			path = Push;
 			sourceTree = "<group>";
@@ -331,6 +338,7 @@
 				A00000000000000000000021 /* GroupListView.swift */,
 				A00000000000000000000022 /* JoinGroupView.swift */,
 				A0000000000000000000003D /* GroupMapView.swift */,
+				A00000000000000000000043 /* ZoomableMapView.swift */,
 			);
 			path = Groups;
 			sourceTree = "<group>";
@@ -367,6 +375,7 @@
 				A0000000000000000000003E /* DMRelayService.swift */,
 				A00000000000000000000040 /* ReportService.swift */,
 				A00000000000000000000041 /* StorageReference+Retry.swift */,
+				A00000000000000000000044 /* ImageCacheService.swift */,
 			);
 			path = Firebase;
 			sourceTree = "<group>";
@@ -504,6 +513,9 @@
 				B0000000000000000000003F /* BlockStore.swift in Sources */,
 				B00000000000000000000040 /* ReportService.swift in Sources */,
 				B00000000000000000000041 /* StorageReference+Retry.swift in Sources */,
+				B00000000000000000000042 /* LocalNotificationHelper.swift in Sources */,
+				B00000000000000000000043 /* ZoomableMapView.swift in Sources */,
+				B00000000000000000000044 /* ImageCacheService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

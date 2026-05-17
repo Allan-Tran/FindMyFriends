@@ -202,22 +202,9 @@ struct MessageBubble: View {
                         .foregroundStyle(.secondary)
                 }
                 if let url = imageURL {
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .success(let img):
-                            img.resizable().scaledToFit()
-                                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                        case .failure:
-                            Label("Image unavailable", systemImage: "photo.badge.exclamationmark")
-                                .font(.caption).foregroundStyle(.secondary)
-                                .padding(8)
-                        case .empty:
-                            ProgressView().padding(20)
-                        @unknown default:
-                            EmptyView()
-                        }
-                    }
-                    .frame(maxWidth: 240)
+                    CachedAsyncImage(url: url)
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .frame(maxWidth: 240)
                 } else if let img = inlineImage {
                     Image(uiImage: img)
                         .resizable().scaledToFit()

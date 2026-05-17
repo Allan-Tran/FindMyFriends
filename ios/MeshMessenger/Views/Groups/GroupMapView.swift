@@ -17,9 +17,36 @@ private final class MapViewModel: ObservableObject {
     private var mapUrlListener: ListenerRegistration?
     private let service = MapService()
 
-    func start(groupId: String) {
+    private var seenPinIds: Set<String> = []
+    private var pinListenerReady = false
+    private var groupName: String = ""
+    private var myUsername: String?
+
+    func start(groupId: String, groupName: String, myUsername: String?) {
+        self.groupName = groupName
+        self.myUsername = myUsername
+
         pinsListener = service.observePins(groupId: groupId) { [weak self] pins in
-            Task { @MainActor [weak self] in self?.pins = pins }
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                if !self.pinListenerReady {
+                    self.seenPinIds = Set(pins.compactMap { $0.id })
+                    self.pinListenerReady = true
+                } else {
+                    for pin in pins {
+                        guard let id = pin.id, !self.seenPinIds.contains(id) else { continue }
+                        self.seenPinIds.insert(id)
+                        if pin.username != self.myUsername {
+                            LocalNotificationHelper.postPinAdded(
+                                by: pin.username,
+                                in: self.groupName,
+                                groupId: groupId
+                            )
+                        }
+                    }
+                }
+                self.pins = pins
+            }
         }
         mapUrlListener = service.observeMapUrl(groupId: groupId) { [weak self] url in
             Task { @MainActor [weak self] in
@@ -38,6 +65,8 @@ private final class MapViewModel: ObservableObject {
         mapUrlListener?.remove()
         pinsListener = nil
         mapUrlListener = nil
+        pinListenerReady = false
+        seenPinIds = []
     }
 
     func addPin(groupId: String, x: Double, y: Double, username: String, uid: String, description: String) async {
@@ -52,6 +81,14 @@ private final class MapViewModel: ObservableObject {
     func deletePin(groupId: String, pinId: String) async {
         do {
             try await service.deletePin(groupId: groupId, pinId: pinId)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func updatePinDescription(groupId: String, pinId: String, description: String) async {
+        do {
+            try await service.updatePinDescription(groupId: groupId, pinId: pinId, description: description)
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -77,7 +114,6 @@ private final class MapViewModel: ObservableObject {
         isUploadingMap = false
     }
 
-    // Keyed by URL string so a new upload (new token) naturally busts the cache.
     private static let imageCache = NSCache<NSString, UIImage>()
     private static let imageSession: URLSession = {
         let cfg = URLSessionConfiguration.default
@@ -93,8 +129,7 @@ private final class MapViewModel: ObservableObject {
     private func loadImage(from url: URL) async {
         let key = url.absoluteString as NSString
         if let cached = Self.imageCache.object(forKey: key) {
-            uiImage = cached
-            return
+            uiImage = cached; return
         }
         if let (data, _) = try? await Self.imageSession.data(from: url),
            let img = UIImage(data: data) {
@@ -130,43 +165,43 @@ struct GroupMapView: View {
     private var isAdmin: Bool { session.currentUid == group?.adminId }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 12) {
-                if let img = vm.uiImage {
-                    if isAdmin {
-                        HStack {
-                            Spacer()
-                            let isUploadingMap = vm.isUploadingMap
-                            PhotosPicker(selection: $imageItem, matching: .images, preferredItemEncoding: .compatible) {
-                                if isUploadingMap {
-                                    Label("Uploading…", systemImage: "arrow.up.circle")
-                                        .font(.caption)
-                                } else {
-                                    Label("Replace Map", systemImage: "photo.badge.plus")
-                                        .font(.caption)
-                                }
-                            }
-                            .buttonStyle(.bordered)
-                            .controlSize(.small)
-                            .disabled(isUploadingMap)
-                            .padding(.trailing)
-                        }
-                    }
-                    mapCanvas(img)
-                    Text("Tap anywhere on the map to place your pin.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal)
-                } else if vm.mapImageUrl != nil {
-                    ProgressView("Loading map…")
-                        .frame(height: 300)
-                } else {
-                    noMapPlaceholder
-                }
+        VStack(spacing: 12) {
+            if let img = vm.uiImage {
+                if isAdmin { adminReplaceButton(img: img) }
+
+                ZoomableMapView(
+                    image: img,
+                    pins: visiblePins,
+                    uiColorForPin: { pin in UIColor(Self.pinColor(for: pin.colorHex)) },
+                    onMapTap: { point in
+                        guard session.currentUsername != nil,
+                              session.currentUid != nil else { return }
+                        pendingPinLocation = point
+                    },
+                    onPinTap: { pin in selectedPin = pin }
+                )
+                .aspectRatio(img.size.height > 0 ? img.size.width / img.size.height : 1, contentMode: .fit)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .padding(.horizontal)
+
+                Text("Tap to place a pin · Pinch to zoom")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+            } else if vm.mapImageUrl != nil {
+                ProgressView("Loading map…").frame(height: 300)
+            } else {
+                noMapPlaceholder
             }
-            .padding(.vertical)
         }
-        .task { vm.start(groupId: groupId.uuidString) }
+        .padding(.vertical)
+        .task {
+            vm.start(
+                groupId: groupId.uuidString,
+                groupName: group?.name ?? "",
+                myUsername: session.currentUsername
+            )
+        }
         .onDisappear { vm.stop() }
         .onChange(of: imageItem) { _, item in
             guard let item else { return }
@@ -177,7 +212,23 @@ struct GroupMapView: View {
             Task { await vm.uploadMap(groupId: groupId.uuidString, item: item) }
         }
         .sheet(item: $selectedPin) { pin in
-            pinDetail(pin: pin)
+            PinDetailSheet(
+                pin: pin,
+                groupId: groupId.uuidString,
+                currentUsername: session.currentUsername ?? "",
+                currentUid: session.currentUid ?? "",
+                isAdmin: isAdmin,
+                onDeletePin: { id in
+                    selectedPin = nil
+                    Task { await vm.deletePin(groupId: groupId.uuidString, pinId: id) }
+                },
+                onSaveDescription: { id, desc in
+                    selectedPin = nil
+                    Task { await vm.updatePinDescription(groupId: groupId.uuidString, pinId: id, description: desc) }
+                },
+                onDone: { selectedPin = nil }
+            )
+            .environmentObject(blockStore)
         }
         .sheet(isPresented: Binding(
             get: { pendingPinLocation != nil },
@@ -195,48 +246,29 @@ struct GroupMapView: View {
         }
     }
 
-    // MARK: - Map canvas
-
-    private func mapCanvas(_ image: UIImage) -> some View {
-        Image(uiImage: image)
-            .resizable()
-            .scaledToFit()
-            .frame(maxWidth: .infinity)
-            .overlay {
-                GeometryReader { geo in
-                    ZStack {
-                        Color.clear
-                            .contentShape(Rectangle())
-                            .gesture(
-                                DragGesture(minimumDistance: 0, coordinateSpace: .local)
-                                    .onEnded { val in
-                                        let nx = val.location.x / geo.size.width
-                                        let ny = val.location.y / geo.size.height
-                                        guard (0...1).contains(nx), (0...1).contains(ny) else { return }
-                                        guard session.currentUsername != nil,
-                                              session.currentUid != nil else { return }
-                                        pendingPinLocation = CGPoint(x: nx, y: ny)
-                                    }
-                            )
-
-                        ForEach(visiblePins) { pin in
-                            Circle()
-                                .fill(Self.pinColor(for: pin.colorHex))
-                                .frame(width: 22, height: 22)
-                                .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                                .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
-                                .position(x: pin.x * geo.size.width, y: pin.y * geo.size.height)
-                                .onTapGesture { selectedPin = pin }
-                        }
-                    }
-                }
-            }
-    }
-
     // MARK: - Subviews
 
+    @ViewBuilder
+    private func adminReplaceButton(img: UIImage) -> some View {
+        HStack {
+            Spacer()
+            let uploading = vm.isUploadingMap
+            PhotosPicker(selection: $imageItem, matching: .images, preferredItemEncoding: .compatible) {
+                if uploading {
+                    Label("Uploading…", systemImage: "arrow.up.circle").font(.caption)
+                } else {
+                    Label("Replace Map", systemImage: "photo.badge.plus").font(.caption)
+                }
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .disabled(uploading)
+            .padding(.trailing)
+        }
+    }
+
     private var noMapPlaceholder: some View {
-        let isUploadingMap = vm.isUploadingMap
+        let uploading = vm.isUploadingMap
         return VStack(spacing: 16) {
             Image(systemName: "map")
                 .font(.system(size: 60))
@@ -245,14 +277,14 @@ struct GroupMapView: View {
                 .font(.title3.bold())
             if isAdmin {
                 PhotosPicker(selection: $imageItem, matching: .images, preferredItemEncoding: .compatible) {
-                    if isUploadingMap {
+                    if uploading {
                         Label("Uploading…", systemImage: "arrow.up.circle")
                     } else {
                         Label("Upload Map Image", systemImage: "photo.badge.plus")
                     }
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(isUploadingMap)
+                .disabled(uploading)
             } else {
                 Text("Ask the group leader to upload a map image.")
                     .font(.subheadline)
@@ -309,76 +341,6 @@ struct GroupMapView: View {
         .presentationDetents([.medium])
     }
 
-    @ViewBuilder
-    private func pinDetail(pin: FirestorePin) -> some View {
-        NavigationStack {
-            VStack(spacing: 20) {
-                Circle()
-                    .fill(Self.pinColor(for: pin.colorHex))
-                    .frame(width: 60, height: 60)
-                    .overlay(Circle().stroke(Color.white.opacity(0.5), lineWidth: 3))
-                    .shadow(radius: 4)
-                VStack(spacing: 4) {
-                    Text(pin.username)
-                        .font(.title2.bold())
-                    Text(pin.createdAt.dateValue(), style: .date)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    Text(pin.createdAt.dateValue(), style: .time)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                if let desc = pin.description, !desc.isEmpty {
-                    Text(desc)
-                        .font(.body)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                }
-                if pin.uid == session.currentUid || isAdmin {
-                    Button("Remove Pin", role: .destructive) {
-                        if let id = pin.id {
-                            selectedPin = nil
-                            Task { await vm.deletePin(groupId: groupId.uuidString, pinId: id) }
-                        }
-                    }
-                    .buttonStyle(.bordered)
-                }
-                if pin.uid != session.currentUid {
-                    Button("Report Pin", role: .destructive) {
-                        vm.reportPinTarget = pin
-                    }
-                    .buttonStyle(.borderless)
-                    .font(.callout)
-                    .foregroundStyle(.orange)
-
-                    let isBlocked = blockStore.isBlocked(pin.username)
-                    Button(isBlocked ? "Unblock \(pin.username)" : "Block \(pin.username)",
-                           role: isBlocked ? nil : .destructive) {
-                        isBlocked ? blockStore.unblock(pin.username) : blockStore.block(pin.username)
-                        selectedPin = nil
-                    }
-                    .buttonStyle(.borderless)
-                    .font(.callout)
-                    .foregroundStyle(isBlocked ? .secondary : Color.red)
-                }
-            }
-            .padding()
-            .navigationTitle("Pin Info")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { selectedPin = nil }
-                }
-            }
-        }
-        .presentationDetents([.medium])
-        .sheet(item: $vm.reportPinTarget) { pin in
-            ReportSheet(groupId: groupId.uuidString, pin: pin, reporterUid: session.currentUid ?? "") {
-                selectedPin = nil
-            }
-        }
-    }
-
     // MARK: - Color helpers
 
     private static let hexPalette = [
@@ -403,6 +365,242 @@ struct GroupMapView: View {
         case "#FFCC00": return Color(red: 1.00, green: 0.80, blue: 0.00)
         case "#5AC8FA": return Color(red: 0.35, green: 0.78, blue: 0.98)
         default:        return .red
+        }
+    }
+}
+
+// MARK: - Pin detail model
+
+@MainActor
+private final class PinDetailModel: ObservableObject {
+    @Published var comments: [PinComment] = []
+    @Published var isLoadingComments = true
+
+    private var listener: ListenerRegistration?
+    private let service = MapService()
+    private let groupId: String
+    private let pinId: String
+
+    init(groupId: String, pinId: String) {
+        self.groupId = groupId
+        self.pinId = pinId
+    }
+
+    func startListening() {
+        guard listener == nil else { return }
+        listener = service.observePinComments(groupId: groupId, pinId: pinId) { [weak self] comments in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.isLoadingComments = false
+                self.comments = comments
+            }
+        }
+    }
+
+    func stop() {
+        listener?.remove()
+        listener = nil
+    }
+
+    func addComment(username: String, text: String) async throws {
+        try await service.addPinComment(groupId: groupId, pinId: pinId, username: username, text: text)
+    }
+}
+
+// MARK: - Pin detail sheet
+
+private struct PinDetailSheet: View {
+    let pin: FirestorePin
+    let groupId: String
+    let currentUsername: String
+    let currentUid: String
+    let isAdmin: Bool
+    let onDeletePin: (String) -> Void
+    let onSaveDescription: (String, String) -> Void
+    let onDone: () -> Void
+
+    @EnvironmentObject private var blockStore: BlockStore
+    @StateObject private var model: PinDetailModel
+
+    @State private var editingDescription: String
+    @State private var newCommentText = ""
+    @State private var showAddComment = false
+    @State private var isSubmittingComment = false
+    @State private var submissionError: String?
+    @State private var reportPin: FirestorePin?
+
+    private var isOwner: Bool { pin.uid == currentUid }
+
+    init(pin: FirestorePin, groupId: String, currentUsername: String, currentUid: String,
+         isAdmin: Bool, onDeletePin: @escaping (String) -> Void,
+         onSaveDescription: @escaping (String, String) -> Void, onDone: @escaping () -> Void) {
+        self.pin = pin
+        self.groupId = groupId
+        self.currentUsername = currentUsername
+        self.currentUid = currentUid
+        self.isAdmin = isAdmin
+        self.onDeletePin = onDeletePin
+        self.onSaveDescription = onSaveDescription
+        self.onDone = onDone
+        _editingDescription = State(initialValue: pin.description ?? "")
+        _model = StateObject(wrappedValue: PinDetailModel(groupId: groupId, pinId: pin.id ?? ""))
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    HStack {
+                        Spacer()
+                        Circle()
+                            .fill(GroupMapView.pinColor(for: pin.colorHex))
+                            .frame(width: 50, height: 50)
+                            .overlay(Circle().stroke(Color.white.opacity(0.5), lineWidth: 3))
+                            .shadow(radius: 4)
+                        Spacer()
+                    }
+                    VStack(spacing: 4) {
+                        Text(pin.username).font(.title2.bold())
+                        Text(pin.createdAt.dateValue(), style: .date)
+                            .font(.subheadline).foregroundStyle(.secondary)
+                        Text(pin.createdAt.dateValue(), style: .time)
+                            .font(.subheadline).foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+
+                Section("Description") {
+                    if isOwner {
+                        TextField("Add a description…", text: $editingDescription, axis: .vertical)
+                            .lineLimit(2...6)
+                    } else if let desc = pin.description, !desc.isEmpty {
+                        Text(desc)
+                    } else {
+                        Text("No description").foregroundStyle(.secondary)
+                    }
+                }
+
+                Section("Additional Descriptions") {
+                    if model.isLoadingComments {
+                        HStack {
+                            Spacer()
+                            ProgressView()
+                            Spacer()
+                        }
+                    } else if model.comments.isEmpty {
+                        Text("No additional descriptions yet.")
+                            .foregroundStyle(.secondary)
+                            .font(.subheadline)
+                    } else {
+                        ForEach(model.comments) { comment in
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(comment.username)
+                                    .font(.caption.bold())
+                                    .foregroundStyle(.secondary)
+                                Text(comment.text)
+                            }
+                            .padding(.vertical, 2)
+                        }
+                    }
+                }
+
+                Section {
+                    if showAddComment {
+                        TextField("Describe what you see here…", text: $newCommentText, axis: .vertical)
+                            .lineLimit(2...5)
+                        if let err = submissionError {
+                            Text(err)
+                                .font(.caption)
+                                .foregroundStyle(.red)
+                        }
+                        HStack {
+                            Button("Cancel") {
+                                showAddComment = false
+                                newCommentText = ""
+                                submissionError = nil
+                            }
+                            .foregroundStyle(.secondary)
+                            Spacer()
+                            Button("Submit") { submitComment() }
+                                .fontWeight(.semibold)
+                                .disabled(newCommentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSubmittingComment)
+                        }
+                    } else {
+                        Button("Add another description") {
+                            showAddComment = true
+                            submissionError = nil
+                        }
+                    }
+                }
+
+                if isOwner {
+                    Section {
+                        Button("Save Description") {
+                            guard let id = pin.id else { return }
+                            onSaveDescription(id, editingDescription.trimmingCharacters(in: .whitespacesAndNewlines))
+                        }
+                        Button("Remove Pin", role: .destructive) {
+                            guard let id = pin.id else { return }
+                            onDeletePin(id)
+                        }
+                    }
+                } else {
+                    if isAdmin {
+                        Section {
+                            Button("Remove Pin", role: .destructive) {
+                                guard let id = pin.id else { return }
+                                onDeletePin(id)
+                            }
+                        }
+                    }
+                    Section {
+                        Button("Report Pin") { reportPin = pin }
+                            .foregroundStyle(.orange)
+                        let isBlocked = blockStore.isBlocked(pin.username)
+                        Button(isBlocked ? "Unblock \(pin.username)" : "Block \(pin.username)",
+                               role: isBlocked ? nil : .destructive) {
+                            isBlocked ? blockStore.unblock(pin.username) : blockStore.block(pin.username)
+                            onDone()
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Pin Info")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { onDone() }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+        .onAppear {
+            model.startListening()
+        }
+        .onDisappear { model.stop() }
+        .sheet(item: $reportPin) { p in
+            ReportSheet(groupId: groupId, pin: p, reporterUid: currentUid) {
+                reportPin = nil
+                onDone()
+            }
+        }
+    }
+
+    private func submitComment() {
+        let trimmed = newCommentText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        isSubmittingComment = true
+        submissionError = nil
+        newCommentText = ""
+        showAddComment = false
+        Task {
+            do {
+                try await model.addComment(username: currentUsername, text: trimmed)
+            } catch {
+                submissionError = error.localizedDescription
+                showAddComment = true
+            }
+            isSubmittingComment = false
         }
     }
 }

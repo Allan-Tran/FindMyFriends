@@ -237,9 +237,6 @@ extension MeshEngine: MCNearbyServiceBrowserDelegate {
         Task { @MainActor in
             guard let session = self.session else { return }
             
-            // TIE-BREAKER: Prevent cross-invitation session collisions.
-            guard peerID.displayName > session.myPeerID.displayName else { return }
-            
             let context = self.groupIds.map { $0.meshPrefix }.sorted().joined(separator: ",").data(using: .utf8)
             browser.invitePeer(peerID, to: session, withContext: context, timeout: 15)
         }

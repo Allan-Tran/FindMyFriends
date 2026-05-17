@@ -142,6 +142,7 @@ final class MessageRouter: ObservableObject, MeshEngineDelegate {
         // Also push via BLE so backgrounded peers receive messages even when MCSession is suspended.
         if let data = try? MeshCodec.encoder.encode(envelope) {
             proximityEngine.broadcastMessageData(data)
+            proximityEngine.writeToAllConnectedPeripherals(data)
         }
         if dmIds.contains(groupId) {
             await onDMRelaySend?(envelope, groupId)

@@ -60,6 +60,12 @@ final class ProximityEngine: NSObject, ObservableObject {
     private let messageCharacteristicUUID = CBUUID(string: AppConfig.proximityMessageCharacteristicUUID)
 
     private static let staleThreshold: TimeInterval = 30
+    
+    func writeToAllConnectedPeripherals(_ data: Data) {
+        for peripheral in connectedPeripherals.values {
+            writeMessageData(data, to: peripheral)
+        }
+    }
 
     func start(localIdentity: String) {
         localUsername = localIdentity
@@ -480,3 +486,5 @@ extension ProximityEngine: CBPeripheralManagerDelegate {
         }
     }
 }
+
+
